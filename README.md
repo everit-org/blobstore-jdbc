@@ -1,3 +1,3 @@
 # blobstore-jdbc
 
-JDBC based implementation of Blobstore API that uses Blob type to store data.
+Blobstore implementation that uses standard JDBC API and Blob type.
