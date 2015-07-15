@@ -12,11 +12,13 @@ import org.everit.blobstore.api.NoSuchBlobException;
 import org.everit.blobstore.jdbc.internal.BlobAndVersion;
 import org.everit.blobstore.jdbc.internal.InitialBlobBean;
 import org.everit.blobstore.jdbc.internal.JdbcBlobAccessor;
+import org.everit.blobstore.jdbc.internal.JdbcBlobReader;
 import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.sql.Configuration;
 import com.querydsl.sql.SQLQuery;
+import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLInsertClause;
 
 /**
@@ -58,13 +60,7 @@ public class JdbcBlobstore implements Blobstore {
 
   @Override
   public BlobAccessor createBlob() {
-    Connection connection;
-    try {
-      connection = dataSource.getConnection();
-    } catch (SQLException e) {
-      // TODO
-      throw new RuntimeException(e);
-    }
+    Connection connection = getNewDatabaseConnection();
 
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     Long blobId;
@@ -81,8 +77,18 @@ public class JdbcBlobstore implements Blobstore {
 
   @Override
   public void deleteBlob(final long blobId) {
-    // TODO Auto-generated method stub
-
+    try (Connection connection = dataSource.getConnection()) {
+      QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
+      long rowNum = new SQLDeleteClause(connection, querydslConfiguration, qBlob)
+          .where(qBlob.blobId.eq(blobId))
+          .execute();
+      if (rowNum == 0) {
+        throw new NoSuchBlobException(blobId);
+      }
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -122,20 +128,7 @@ public class JdbcBlobstore implements Blobstore {
     }
   }
 
-  @Override
-  public BlobReader readBlob(final long blobId) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public BlobReader readBlobForUpdate(final long blobId) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public BlobAccessor updateBlob(final long blobId) {
+  private Connection getNewDatabaseConnection() {
     Connection connection;
     try {
       connection = dataSource.getConnection();
@@ -143,7 +136,26 @@ public class JdbcBlobstore implements Blobstore {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
     }
+    return connection;
+  }
 
+  @Override
+  public BlobReader readBlob(final long blobId) {
+    Connection connection = getNewDatabaseConnection();
+    BlobAndVersion blobAndVersion = getBlobAndVersion(blobId, false, connection);
+    return new JdbcBlobReader(blobId, blobAndVersion.version, connection, blobAndVersion.blob);
+  }
+
+  @Override
+  public BlobReader readBlobForUpdate(final long blobId) {
+    Connection connection = getNewDatabaseConnection();
+    BlobAndVersion blobAndVersion = getBlobAndVersion(blobId, true, connection);
+    return new JdbcBlobReader(blobId, blobAndVersion.version, connection, blobAndVersion.blob);
+  }
+
+  @Override
+  public BlobAccessor updateBlob(final long blobId) {
+    Connection connection = getNewDatabaseConnection();
     return updateBlob(blobId, connection);
   }
 
@@ -158,7 +170,8 @@ public class JdbcBlobstore implements Blobstore {
    */
   protected BlobAccessor updateBlob(final long blobId, final Connection connection) {
     BlobAndVersion blobAndVersion = getBlobAndVersion(blobId, true, connection);
-    return new JdbcBlobAccessor(blobId, blobAndVersion.version, connection, blobAndVersion.blob);
+    return new JdbcBlobAccessor(blobId, blobAndVersion.version, connection, blobAndVersion.blob,
+        querydslConfiguration);
   }
 
 }

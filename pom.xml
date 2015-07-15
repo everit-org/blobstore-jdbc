@@ -37,8 +37,8 @@
 
   <properties>
     <projectpath>blobstore-jdbc</projectpath>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <scm>
@@ -138,9 +138,9 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <groupId>org.everit.blobstore</groupId>
+      <artifactId>org.everit.blobstore.testbase</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
 
@@ -162,6 +162,7 @@
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
       <version>2.3.3</version>
+      <classifier>jdk6debug</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -192,6 +193,12 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <version>5.1.36</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.186</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
