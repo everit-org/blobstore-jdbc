@@ -1,6 +1,5 @@
 package org.everit.blobstore.jdbc.internal;
 
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -14,9 +13,9 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   protected final Configuration querydslConfiguration;
 
-  public JdbcBlobAccessor(final long blobId, final long version, final Connection connection,
-      final Blob blob, final Configuration querydslConfiguration) {
-    super(blobId, version, connection, blob);
+  public JdbcBlobAccessor(final ConnectedBlob connectedBlob, final Connection connection,
+      final Configuration querydslConfiguration) {
+    super(connectedBlob, connection);
     this.querydslConfiguration = querydslConfiguration;
   }
 
@@ -32,18 +31,18 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     new SQLUpdateClause(connection, querydslConfiguration, qBlob)
         .set(qBlob.version_, newVersion())
-        .where(qBlob.blobId.eq(blobId));
+        .where(qBlob.blobId.eq(connectedBlob.blobId));
   }
 
   @Override
   public long newVersion() {
-    return this.version + 1;
+    return connectedBlob.version + 1;
   }
 
   @Override
   public void truncate(final long newLength) {
     try {
-      blob.truncate(newLength);
+      connectedBlob.blob.truncate(newLength);
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
@@ -61,7 +60,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
       return;
     }
     try {
-      blob.setBytes(position + 1, b, off, len);
+      connectedBlob.blob.setBytes(position + 1, b, off, len);
       position += len;
     } catch (SQLException e) {
       // TODO Auto-generated catch block

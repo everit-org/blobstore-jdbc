@@ -1,6 +1,9 @@
 package org.everit.blobstore.jdbc;
 
+import java.sql.Blob;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.sql.DataSource;
@@ -9,14 +12,17 @@ import org.everit.blobstore.api.BlobAccessor;
 import org.everit.blobstore.api.BlobReader;
 import org.everit.blobstore.api.Blobstore;
 import org.everit.blobstore.api.NoSuchBlobException;
-import org.everit.blobstore.jdbc.internal.BlobAndVersion;
-import org.everit.blobstore.jdbc.internal.InitialBlobBean;
+import org.everit.blobstore.jdbc.internal.ConnectedBlob;
+import org.everit.blobstore.jdbc.internal.EmptyReadOnlyBlob;
 import org.everit.blobstore.jdbc.internal.JdbcBlobAccessor;
 import org.everit.blobstore.jdbc.internal.JdbcBlobReader;
 import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.UnmodifiableIterator;
 import com.querydsl.core.Tuple;
 import com.querydsl.sql.Configuration;
+import com.querydsl.sql.SQLBindings;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLInsertClause;
@@ -40,21 +46,73 @@ public class JdbcBlobstore implements Blobstore {
    * This method is called when an {@link Error} or {@link RuntimeException} occured and the
    * connection should be closed.
    *
-   * @param connection
-   *          The database connection that should be closed.
+   * @param closeable
+   *          The closeable instance that should be closed.
    * @param e
    *          The {@link Error} or {@link RuntimeException} that occured.
    */
-  protected void closeConnectionDueToThrowable(final Connection connection, final Throwable e) {
+  protected void closeCloseableDueToThrowable(final AutoCloseable closeable, final Throwable e) {
     try {
-      connection.close();
+      closeable.close();
     } catch (Throwable th) {
       e.addSuppressed(th);
     }
     if (e instanceof Error) {
       throw (Error) e;
     } else if (e instanceof RuntimeException) {
+      // TODO
       throw (RuntimeException) e;
+    }
+  }
+
+  /**
+   * Gets a blob with its current version from the database. If an exception or error occures, this
+   * method closes the database connection.
+   *
+   * @param blobId
+   *          The id of the blob.
+   * @param forUpdate
+   *          Whether a pessimistic lock should be applied on the blob or not.
+   * @param connection
+   *          The database connection.
+   * @return The blob and its current version.
+   */
+  protected ConnectedBlob connectBlob(final long blobId, final boolean forUpdate,
+      final Connection connection) {
+    QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
+    try {
+      SQLQuery<Tuple> query = new SQLQuery<>(connection, querydslConfiguration)
+          .select(qBlob.blobId, qBlob.version_.as("version_"), qBlob.blob_.as("blob_"))
+          .from(qBlob)
+          .where(qBlob.blobId.eq(blobId));
+      if (forUpdate) {
+        query.forUpdate();
+      }
+      SQLBindings sqlBindings = query.getSQL();
+
+      PreparedStatement preparedStatement = connection.prepareStatement(sqlBindings.getSQL());
+      ImmutableList<Object> bindings = sqlBindings.getBindings();
+      int i = 0;
+      UnmodifiableIterator<Object> iterator = bindings.iterator();
+      while (iterator.hasNext()) {
+        Object binding = iterator.next();
+        i++;
+        preparedStatement.setObject(i, binding);
+      }
+      ResultSet resultSet = preparedStatement.executeQuery();
+      if (!resultSet.next()) {
+        throw new NoSuchBlobException(blobId);
+      }
+
+      long version = resultSet.getLong("version_");
+      Blob blob = resultSet.getBlob("blob_");
+
+      return new ConnectedBlob(blobId, blob, version, preparedStatement);
+
+    } catch (SQLException | RuntimeException | Error e) {
+      closeCloseableDueToThrowable(connection, e);
+      // TODO throw unchecked sql exception
+      throw new RuntimeException(e);
     }
   }
 
@@ -65,10 +123,12 @@ public class JdbcBlobstore implements Blobstore {
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     Long blobId;
     try {
-      blobId = new SQLInsertClause(connection, querydslConfiguration, qBlob)
-          .populate(new InitialBlobBean()).executeWithKey(qBlob.blobId);
+      blobId =
+          new SQLInsertClause(connection, querydslConfiguration, qBlob)
+              .set(qBlob.version_, 0L).set(qBlob.blob_, new EmptyReadOnlyBlob())
+              .executeWithKey(qBlob.blobId);
     } catch (RuntimeException | Error e) {
-      closeConnectionDueToThrowable(connection, e);
+      closeCloseableDueToThrowable(connection, e);
       throw new RuntimeException(e);
     }
 
@@ -91,43 +151,6 @@ public class JdbcBlobstore implements Blobstore {
     }
   }
 
-  /**
-   * Gets a blob with its current version from the database. If an exception or error occures, this
-   * method closes the database connection.
-   *
-   * @param blobId
-   *          The id of the blob.
-   * @param forUpdate
-   *          Whether a pessimistic lock should be applied on the blob or not.
-   * @param connection
-   *          The database connection.
-   * @return The blob and its current version.
-   */
-  protected BlobAndVersion getBlobAndVersion(final long blobId, final boolean forUpdate,
-      final Connection connection) {
-    QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
-    try {
-      SQLQuery<Tuple> query = new SQLQuery<>(connection, querydslConfiguration)
-          .select(qBlob.version_, qBlob.data_)
-          .from(qBlob)
-          .where(qBlob.blobId.eq(blobId));
-      if (forUpdate) {
-        query.forUpdate();
-      }
-      Tuple tuple = query.fetchFirst();
-
-      if (tuple == null) {
-        throw new NoSuchBlobException(blobId);
-      }
-
-      return new BlobAndVersion(tuple.get(qBlob.data_), tuple.get(qBlob.version_));
-
-    } catch (RuntimeException | Error e) {
-      closeConnectionDueToThrowable(connection, e);
-      throw new RuntimeException(e);
-    }
-  }
-
   private Connection getNewDatabaseConnection() {
     Connection connection;
     try {
@@ -142,15 +165,15 @@ public class JdbcBlobstore implements Blobstore {
   @Override
   public BlobReader readBlob(final long blobId) {
     Connection connection = getNewDatabaseConnection();
-    BlobAndVersion blobAndVersion = getBlobAndVersion(blobId, false, connection);
-    return new JdbcBlobReader(blobId, blobAndVersion.version, connection, blobAndVersion.blob);
+    ConnectedBlob connectedBlob = connectBlob(blobId, false, connection);
+    return new JdbcBlobReader(connectedBlob, connection);
   }
 
   @Override
   public BlobReader readBlobForUpdate(final long blobId) {
     Connection connection = getNewDatabaseConnection();
-    BlobAndVersion blobAndVersion = getBlobAndVersion(blobId, true, connection);
-    return new JdbcBlobReader(blobId, blobAndVersion.version, connection, blobAndVersion.blob);
+    ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
+    return new JdbcBlobReader(connectedBlob, connection);
   }
 
   @Override
@@ -169,9 +192,8 @@ public class JdbcBlobstore implements Blobstore {
    * @return An accessor to modify the blob content.
    */
   protected BlobAccessor updateBlob(final long blobId, final Connection connection) {
-    BlobAndVersion blobAndVersion = getBlobAndVersion(blobId, true, connection);
-    return new JdbcBlobAccessor(blobId, blobAndVersion.version, connection, blobAndVersion.blob,
-        querydslConfiguration);
+    ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
+    return new JdbcBlobAccessor(connectedBlob, connection, querydslConfiguration);
   }
 
 }

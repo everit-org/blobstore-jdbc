@@ -11,12 +11,12 @@ import org.everit.blobstore.api.Blobstore;
 import org.everit.blobstore.testbase.AbstractBlobstoreTest;
 import org.everit.osgi.transaction.helper.api.TransactionHelper;
 import org.everit.osgi.transaction.helper.internal.TransactionHelperImpl;
-import org.hsqldb.jdbc.pool.JDBCXADataSource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.postgresql.xa.PGXADataSource;
 
 import com.querydsl.sql.Configuration;
-import com.querydsl.sql.HSQLDBTemplates;
+import com.querydsl.sql.MySQLTemplates;
 
 import liquibase.Contexts;
 import liquibase.Liquibase;
@@ -54,14 +54,33 @@ public class JdbcBlobstoreTest extends AbstractBlobstoreTest {
       throw new RuntimeException(e);
     }
 
-    JDBCXADataSource xaDataSource;
-    try {
-      xaDataSource = new JDBCXADataSource();
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
+    // EmbeddedXADataSource xaDataSource = new EmbeddedXADataSource();
+    // xaDataSource.setCreateDatabase("create");
+    // xaDataSource.setDatabaseName("target/testdb");
+    // xaDataSource.setUser("sa");
+    // xaDataSource.setPassword("");
 
-    xaDataSource.setUrl("jdbc:hsqldb:mem:test");
+    PGXADataSource xaDataSource = new PGXADataSource();
+    xaDataSource.setServerName("localhost");
+    xaDataSource.setPortNumber(5433);
+    xaDataSource.setUser("test");
+    xaDataSource.setPassword("test");
+    xaDataSource.setDatabaseName("blobstore_jdbc");
+
+    // MysqlXADataSource xaDataSource = new MysqlXADataSource();
+    // xaDataSource.setServerName("localhost");
+    // xaDataSource.setUser("test");
+    // xaDataSource.setPassword("test");
+    // xaDataSource.setDatabaseName("blobstore");
+
+    // JDBCXADataSource xaDataSource;
+    // try {
+    // xaDataSource = new JDBCXADataSource();
+    // xaDataSource.setUrl("jdbc:hsqldb:mem:test");
+    // } catch (SQLException e) {
+    // throw new RuntimeException(e);
+    // }
+
     managedDataSource = new BasicManagedDataSource();
     managedDataSource.setTransactionManager(transactionManager);
     managedDataSource.setXaDataSourceInstance(xaDataSource);
@@ -79,7 +98,7 @@ public class JdbcBlobstoreTest extends AbstractBlobstoreTest {
       e.printStackTrace();
     }
 
-    Configuration querydslConfiguration = new Configuration(new HSQLDBTemplates(true));
+    Configuration querydslConfiguration = new Configuration(new MySQLTemplates('\\', false));
     blobstore = new JdbcBlobstore(managedDataSource, querydslConfiguration);
 
     transactionHelper = new TransactionHelperImpl();
@@ -97,53 +116,4 @@ public class JdbcBlobstoreTest extends AbstractBlobstoreTest {
     return transactionHelper;
   }
 
-  // @Test
-  // public void testBlobCreation() {
-  // GeronimoTransactionManager transactionManager;
-  // try {
-  // transactionManager = new GeronimoTransactionManager(6000);
-  // } catch (XAException e) {
-  // throw new RuntimeException(e);
-  // }
-  //
-  // JDBCXADataSource xaDataSource;
-  // try {
-  // xaDataSource = new JDBCXADataSource();
-  // } catch (SQLException e) {
-  // throw new RuntimeException(e);
-  // }
-  //
-  // xaDataSource.setUrl("jdbc:hsqldb:mem:test");
-  // BasicManagedDataSource managedDataSource = new BasicManagedDataSource();
-  // managedDataSource.setTransactionManager(transactionManager);
-  // managedDataSource.setXaDataSourceInstance(xaDataSource);
-  //
-  // try (Connection connection = managedDataSource.getConnection()) {
-  // DatabaseConnection databaseConnection = new JdbcConnection(connection);
-  //
-  // Liquibase liquibase =
-  // new Liquibase("META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml",
-  // new ClassLoaderResourceAccessor(), databaseConnection);
-  //
-  // liquibase.update((Contexts) null);
-  // } catch (LiquibaseException | SQLException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // }
-  //
-  // Configuration querydslConfiguration = new Configuration(new HSQLDBTemplates(true));
-  // Blobstore blobstore =
-  // new JdbcBlobstore(managedDataSource, querydslConfiguration);
-  //
-  // BlobAccessor blobAccessor = blobstore.createBlob();
-  // System.out.println(blobAccessor.getBlobId());
-  // blobAccessor.close();
-  //
-  // try {
-  // managedDataSource.close();
-  // } catch (SQLException e) {
-  // // TODO Auto-generated catch block
-  // e.printStackTrace();
-  // }
-  // }
 }

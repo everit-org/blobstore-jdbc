@@ -1,6 +1,5 @@
 package org.everit.blobstore.jdbc.internal;
 
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -8,21 +7,14 @@ import org.everit.blobstore.api.BlobReader;
 
 public class JdbcBlobReader implements BlobReader {
 
-  protected final Blob blob;
-
-  protected final long blobId;
+  protected final ConnectedBlob connectedBlob;
 
   protected final Connection connection;
 
   protected long position = 0;
 
-  protected final long version;
-
-  public JdbcBlobReader(final long blobId, final long version, final Connection connection,
-      final Blob blob) {
-    this.blobId = blobId;
-    this.version = version;
-    this.blob = blob;
+  public JdbcBlobReader(final ConnectedBlob connectedBlob, final Connection connection) {
+    this.connectedBlob = connectedBlob;
     this.connection = connection;
   }
 
@@ -30,8 +22,8 @@ public class JdbcBlobReader implements BlobReader {
   public void close() {
     Throwable thrownException = null;
     try {
-      blob.free();
-    } catch (SQLException | RuntimeException | Error e) {
+      connectedBlob.close();
+    } catch (RuntimeException | Error e) {
       thrownException = e;
     }
 
@@ -71,7 +63,7 @@ public class JdbcBlobReader implements BlobReader {
 
   @Override
   public long getBlobId() {
-    return blobId;
+    return connectedBlob.blobId;
   }
 
   @Override
@@ -90,12 +82,12 @@ public class JdbcBlobReader implements BlobReader {
     }
 
     try {
-      byte[] bytes = blob.getBytes(position + 1, len);
+      byte[] bytes = connectedBlob.blob.getBytes(position + 1, len);
       System.arraycopy(bytes, 0, b, off, bytes.length);
       return bytes.length;
     } catch (SQLException e) {
       // TODO Auto-generated catch block
-      throw new RuntimeException();
+      throw new RuntimeException(e);
     }
   }
 
@@ -113,7 +105,7 @@ public class JdbcBlobReader implements BlobReader {
   @Override
   public long size() {
     try {
-      return blob.length();
+      return connectedBlob.blob.length();
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
@@ -122,7 +114,7 @@ public class JdbcBlobReader implements BlobReader {
 
   @Override
   public long version() {
-    return version;
+    return connectedBlob.version;
   }
 
 }

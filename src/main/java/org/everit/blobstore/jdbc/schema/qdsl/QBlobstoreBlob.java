@@ -23,12 +23,12 @@ public class QBlobstoreBlob extends com.querydsl.sql.RelationalPathBase<QBlobsto
 
   private static final long serialVersionUID = -447041485;
 
+  public final SimplePath<Blob> blob_ = createSimple("blob_", Blob.class);
+
   public final NumberPath<Long> blobId = createNumber("blobId", Long.class);
 
   public final com.querydsl.sql.PrimaryKey<QBlobstoreBlob> blobstoreBlobPk =
       createPrimaryKey(blobId);
-
-  public final SimplePath<Blob> data_ = createSimple("data_", Blob.class);
 
   public final NumberPath<Long> version_ = createNumber("version_", Long.class);
 
@@ -54,11 +54,10 @@ public class QBlobstoreBlob extends com.querydsl.sql.RelationalPathBase<QBlobsto
 
   public void addMetadata() {
     addMetadata(blobId,
-        ColumnMetadata.named("blob_id").withIndex(1).ofType(Types.BIGINT).withSize(19).notNull());
-    addMetadata(data_, ColumnMetadata.named("data_").withIndex(3).ofType(Types.BINARY)
-        .withSize(2147483647).notNull());
+        ColumnMetadata.named("blob_id").withIndex(1).ofType(Types.BIGINT).notNull());
+    addMetadata(blob_, ColumnMetadata.named("blob_").withIndex(3).ofType(Types.BLOB).notNull());
     addMetadata(version_,
-        ColumnMetadata.named("version_").withIndex(2).ofType(Types.BIGINT).withSize(19).notNull());
+        ColumnMetadata.named("version_").withIndex(2).ofType(Types.BIGINT).notNull());
   }
 
 }
