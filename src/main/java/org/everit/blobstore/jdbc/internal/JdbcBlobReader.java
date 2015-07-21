@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2011 Everit Kft. (http://www.everit.org)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.everit.blobstore.jdbc.internal;
 
 import java.sql.Connection;
@@ -5,15 +20,20 @@ import java.sql.SQLException;
 
 import org.everit.blobstore.api.BlobReader;
 
+/**
+ * JDBC based {@link BlobReader} implementation that uses {@link java.sql.Blob#getBytes(long, int)}
+ * function to get the content.
+ *
+ */
 public class JdbcBlobReader implements BlobReader {
 
-  protected final ConnectedBlob connectedBlob;
+  protected final QueriedBlob connectedBlob;
 
   protected final Connection connection;
 
   protected long position = 0;
 
-  public JdbcBlobReader(final ConnectedBlob connectedBlob, final Connection connection) {
+  public JdbcBlobReader(final QueriedBlob connectedBlob, final Connection connection) {
     this.connectedBlob = connectedBlob;
     this.connection = connection;
   }
@@ -22,14 +42,14 @@ public class JdbcBlobReader implements BlobReader {
   public void close() {
     Throwable thrownException = null;
     try {
-      connectedBlob.close();
+      connectedBlob.closeStatement();
     } catch (RuntimeException | Error e) {
       thrownException = e;
     }
 
     if (thrownException == null) {
       try {
-        executeAfterBlobFreedAndBeforeConnectionClose();
+        executeAfterBlobStatementClosedButBeforeConnectionClose();
       } catch (SQLException | RuntimeException | Error e) {
         thrownException = e;
       }
@@ -57,7 +77,7 @@ public class JdbcBlobReader implements BlobReader {
    * @throws SQLException
    *           if there is an issue during accessing the database.
    */
-  protected void executeAfterBlobFreedAndBeforeConnectionClose() throws SQLException {
+  protected void executeAfterBlobStatementClosedButBeforeConnectionClose() throws SQLException {
     // Do nothing here
   }
 
@@ -81,8 +101,22 @@ public class JdbcBlobReader implements BlobReader {
       return 0;
     }
 
+    // Pre check is necessary as MySQL JDBC driver cannot handle if length is greater than the
+    // remaining size of the blob.
+    long size = size();
+    int validLen = len;
+    if (size < position + len) {
+      validLen = (int) (size - position);
+    }
+    if (validLen == 0) {
+      // Necessary because bug in Mysql jdbc driver
+      return -1;
+    } else if (validLen < 0) {
+      throw new IndexOutOfBoundsException();
+    }
+
     try {
-      byte[] bytes = connectedBlob.blob.getBytes(position + 1, len);
+      byte[] bytes = connectedBlob.blob.getBytes(position + 1, validLen);
       System.arraycopy(bytes, 0, b, off, bytes.length);
       return bytes.length;
     } catch (SQLException e) {

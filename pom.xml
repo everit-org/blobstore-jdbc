@@ -202,4 +202,25 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+    <!-- To test with oracle, download jdbc driver and install it into your local maven repo
+         with the command:
+    
+         mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc7 -Dversion=12.1.0.2 \
+             -Dpackaging=jar -Dfile=ojdbc7_g.jar -DgeneratePom=true -->
+      <id>org.everit.blobstore.jdbc.test.oracle</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.oracle</groupId>
+          <artifactId>ojdbc7</artifactId>
+          <version>12.1.0.2</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

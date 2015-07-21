@@ -1,49 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2011 Everit Kft. (http://www.everit.org)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"
   objectQuotingStrategy="QUOTE_ALL_OBJECTS">
 
   <property name="blob.type" value="oid" dbms="postgresql" />
+  <property name="blob.type" value="longblob" dbms="mariadb" />
+  <property name="blob.type" value="longblob" dbms="mysql" />
   <property name="blob.type" value="blob" />
 
   <changeSet id="1.0.0" author="everit">
-    <createTable tableName="blobstore_blob">
-      <column name="blob_id" type="bigint" autoIncrement="true">
-        <constraints primaryKey="true" nullable="false" />
+    <createTable tableName="BLOBSTORE_BLOB">
+      <column name="BLOB_ID" type="bigint" autoIncrement="true">
+        <constraints primaryKeyName="PK_BLOBSTORE_BLOB" primaryKey="true" nullable="false" />
       </column>
-      <column name="version_" type="bigint">
+      <column name="VERSION_" type="bigint">
         <constraints nullable="false" />
       </column>
-      <column name="blob_" type="${blob.type}">
+      <column name="BLOB_" type="${blob.type}">
         <constraints nullable="false" />
       </column>
     </createTable>
-    <createProcedure>CREATE OR REPLACE FUNCTION blobstore_manage() RETURNS trigger AS $BODY$
+    <createProcedure dbms="postgresql">CREATE OR REPLACE FUNCTION blobstore_manage() RETURNS trigger AS $BODY$
 DECLARE
     blobstore_tmp_row RECORD;
 BEGIN
 IF (TG_OP = 'UPDATE') THEN
-  IF (NEW.blob_ != OLD.blob_) THEN
-    PERFORM lo_unlink(OLD.blob_);
+  IF (NEW."BLOB_" != OLD."BLOB_") THEN
+    PERFORM lo_unlink(OLD."BLOB_");
   END IF;
   RETURN NEW;
 ELSIF (TG_OP = 'DELETE') THEN
-  PERFORM lo_unlink(OLD.blob_);
+  PERFORM lo_unlink(OLD."BLOB_");
   RETURN OLD;
 ELSIF (TG_OP = 'TRUNCATE') THEN
-  FOR blobstore_tmp_row IN SELECT * FROM blobstore_blob LOOP
-    PERFORM lo_unlink(blobstore_tmp_row.blob_);
+  FOR blobstore_tmp_row IN SELECT * FROM "BLOBSTORE_BLOB" LOOP
+    PERFORM lo_unlink(blobstore_tmp_row."BLOB_");
   END LOOP;
-  DELETE FROM pg_largeobject WHERE loid IN (SELECT blob_ FROM blobstore_blob);
+  DELETE FROM pg_largeobject WHERE loid IN (SELECT "BLOB_" FROM "BLOBSTORE_BLOB");
 END IF;
 RETURN null;
 END;
 $BODY$ LANGUAGE plpgsql</createProcedure>
-    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage BEFORE UPDATE OR DELETE ON blobstore_blob
+    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage BEFORE UPDATE OR DELETE ON "BLOBSTORE_BLOB"
       FOR EACH ROW EXECUTE PROCEDURE blobstore_manage()
     </sql>
-    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage_truncate BEFORE TRUNCATE ON blobstore_blob
+    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage_truncate BEFORE TRUNCATE ON "BLOBSTORE_BLOB"
       EXECUTE PROCEDURE blobstore_manage()
     </sql>
   </changeSet>

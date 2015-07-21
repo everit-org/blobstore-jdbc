@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2011 Everit Kft. (http://www.everit.org)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.everit.blobstore.jdbc.internal;
 
 import java.sql.Connection;
@@ -13,10 +28,14 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   protected final Configuration querydslConfiguration;
 
-  public JdbcBlobAccessor(final ConnectedBlob connectedBlob, final Connection connection,
-      final Configuration querydslConfiguration) {
+  protected final boolean updateBlobContentInUpdateSQLNecessary;
+
+  public JdbcBlobAccessor(final QueriedBlob connectedBlob, final Connection connection,
+      final Configuration querydslConfiguration,
+      final boolean updateBlobContentInUpdateSQLNecessary) {
     super(connectedBlob, connection);
     this.querydslConfiguration = querydslConfiguration;
+    this.updateBlobContentInUpdateSQLNecessary = updateBlobContentInUpdateSQLNecessary;
   }
 
   @Override
@@ -25,13 +44,18 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
   }
 
   @Override
-  protected void executeAfterBlobFreedAndBeforeConnectionClose() throws SQLException {
-    super.executeAfterBlobFreedAndBeforeConnectionClose();
+  protected void executeAfterBlobStatementClosedButBeforeConnectionClose() throws SQLException {
+    super.executeAfterBlobStatementClosedButBeforeConnectionClose();
 
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
-    new SQLUpdateClause(connection, querydslConfiguration, qBlob)
+    SQLUpdateClause updateClause = new SQLUpdateClause(connection, querydslConfiguration, qBlob)
         .set(qBlob.version_, newVersion())
         .where(qBlob.blobId.eq(connectedBlob.blobId));
+
+    if (updateBlobContentInUpdateSQLNecessary) {
+      updateClause.set(qBlob.blob_, connectedBlob.blob);
+    }
+    updateClause.execute();
   }
 
   @Override
