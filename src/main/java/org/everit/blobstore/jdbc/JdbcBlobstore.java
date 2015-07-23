@@ -129,6 +129,7 @@ public class JdbcBlobstore implements Blobstore {
         pessimisticLockQueryEnhancer.enhanceQuery(query);
       }
       SQLBindings sqlBindings = query.getSQL();
+      System.out.println("///////////// " + sqlBindings.getSQL());
 
       PreparedStatement preparedStatement = connection.prepareStatement(sqlBindings.getSQL());
       ImmutableList<Object> bindings = sqlBindings.getBindings();

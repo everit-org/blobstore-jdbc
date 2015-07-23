@@ -29,7 +29,7 @@ import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.PostgreSQLTemplates;
 import com.querydsl.sql.SQLExpressions;
-import com.querydsl.sql.SQLServer2012Templates;
+import com.querydsl.sql.SQLServerTemplates;
 import com.querydsl.sql.SQLTemplates;
 
 /**
@@ -63,7 +63,7 @@ public final class JdbcBlobstoreConfigurationUtil {
     DEFAULT_SQL_TEMPLATES.put(DatabaseTypeEnum.MYSQL, new MySQLTemplates(true));
     DEFAULT_SQL_TEMPLATES.put(DatabaseTypeEnum.ORACLE, new OracleTemplates(true));
     DEFAULT_SQL_TEMPLATES.put(DatabaseTypeEnum.POSTGRESQL, new PostgreSQLTemplates(true));
-    DEFAULT_SQL_TEMPLATES.put(DatabaseTypeEnum.SQLSERVER, new SQLServer2012Templates());
+    DEFAULT_SQL_TEMPLATES.put(DatabaseTypeEnum.SQLSERVER, new SQLServerTemplates(true));
     DEFAULT_SQL_TEMPLATES.put(DatabaseTypeEnum.UNKNOWN, SQLTemplates.DEFAULT);
 
     DEFAULT_UPDATE_SQL_FOR_MODIFIED_BLOB_CONTENT_NECESSARY.put(DatabaseTypeEnum.DERBY, true);
