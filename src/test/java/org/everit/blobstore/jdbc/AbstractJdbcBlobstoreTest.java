@@ -15,7 +15,6 @@
  */
 package org.everit.blobstore.jdbc;
 
-import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -25,11 +24,14 @@ import javax.transaction.xa.XAException;
 import org.apache.commons.dbcp2.managed.BasicManagedDataSource;
 import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
 import org.everit.blobstore.api.Blobstore;
+import org.everit.blobstore.mem.MemBlobstore;
 import org.everit.blobstore.testbase.AbstractBlobstoreTest;
+import org.everit.blobstore.testbase.BlobstoreStressAndConsistencyTester;
 import org.everit.osgi.transaction.helper.api.TransactionHelper;
 import org.everit.osgi.transaction.helper.internal.TransactionHelperImpl;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import com.querydsl.sql.SQLTemplates;
 
@@ -47,6 +49,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
   protected TransactionHelperImpl transactionHelper;
 
+  protected GeronimoTransactionManager transactionManager;
+
   @Override
   @After
   public void after() {
@@ -62,7 +66,6 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
   @Before
   public void before() {
-    GeronimoTransactionManager transactionManager;
     try {
       transactionManager = new GeronimoTransactionManager(6000);
     } catch (XAException e) {
@@ -76,13 +79,13 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     try (Connection connection = managedDataSource.getConnection()) {
       DatabaseConnection databaseConnection = new JdbcConnection(connection);
 
-      Liquibase liquibase =
-          new Liquibase("META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml",
-              new ClassLoaderResourceAccessor(), databaseConnection);
+      Liquibase liquibase = new Liquibase(
+          "META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml",
+          new ClassLoaderResourceAccessor(), databaseConnection);
 
-      StringWriter sw = new StringWriter();
-      liquibase.update((Contexts) null, sw);
-      System.out.println("Update SQL: \n" + sw.toString());
+      // StringWriter sw = new StringWriter();
+      // liquibase.update((Contexts) null, sw);
+      // System.out.println("Update SQL: \n" + sw.toString());
       liquibase.update((Contexts) null);
     } catch (LiquibaseException | SQLException e) {
       try {
@@ -121,4 +124,12 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   }
 
   protected abstract XADataSource getXADataSource();
+
+  @Test
+  public void testConsistency() {
+    MemBlobstore memBlobstore = new MemBlobstore(transactionManager);
+    BlobstoreStressAndConsistencyTester.runStressTest(
+        new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration(),
+        transactionHelper, getBlobStore(), memBlobstore);
+  }
 }

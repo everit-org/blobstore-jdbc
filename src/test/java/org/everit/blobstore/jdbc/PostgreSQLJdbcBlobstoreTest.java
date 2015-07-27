@@ -33,7 +33,7 @@ public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   protected XADataSource getXADataSource() {
     PGXADataSource xaDataSource = new PGXADataSource();
     xaDataSource.setServerName("localhost");
-    xaDataSource.setPortNumber(5433);
+    xaDataSource.setPortNumber(5432);
     xaDataSource.setUser("test");
     xaDataSource.setPassword("test");
     xaDataSource.setDatabaseName("blobstore_jdbc");

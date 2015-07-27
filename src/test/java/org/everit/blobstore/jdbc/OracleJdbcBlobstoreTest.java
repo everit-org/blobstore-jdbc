@@ -15,14 +15,9 @@
  */
 package org.everit.blobstore.jdbc;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.sql.XADataSource;
-
-import org.junit.Test;
 
 import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.SQLTemplates;
@@ -49,27 +44,5 @@ public class OracleJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
     oracleXADataSource.setPassword("test");
     // TODO Auto-generated method stub
     return oracleXADataSource;
-  }
-
-  @Test
-  public void testOracleTable() {
-    try (Connection connection = managedDataSource.getConnection()) {
-      String sql =
-          "insert into BLOBSTORE_BLOB (VERSION_, BLOB_) values (?, empty_blob())";
-      PreparedStatement preparedStatement =
-          connection.prepareStatement(sql, new String[] { "BLOB_ID" });
-      preparedStatement.setLong(1, 0);
-
-      preparedStatement.execute();
-      ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
-      if (generatedKeys.next()) {
-        System.out.println("//////////// " + generatedKeys.getString(1));
-      }
-      if (generatedKeys.next()) {
-        System.out.println("//////////// " + generatedKeys.getString(1));
-      }
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

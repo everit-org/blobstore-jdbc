@@ -26,16 +26,23 @@ import com.querydsl.sql.dml.SQLUpdateClause;
 
 public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
+  protected final long newVersion;
+
   protected final Configuration querydslConfiguration;
 
   protected final boolean updateBlobContentInUpdateSQLNecessary;
 
   public JdbcBlobAccessor(final QueriedBlob connectedBlob, final Connection connection,
       final Configuration querydslConfiguration,
-      final boolean updateBlobContentInUpdateSQLNecessary) {
+      final boolean updateBlobContentInUpdateSQLNecessary, final boolean incrementVersion) {
     super(connectedBlob, connection);
     this.querydslConfiguration = querydslConfiguration;
     this.updateBlobContentInUpdateSQLNecessary = updateBlobContentInUpdateSQLNecessary;
+    if (incrementVersion) {
+      this.newVersion = connectedBlob.version + 1;
+    } else {
+      this.newVersion = connectedBlob.version;
+    }
   }
 
   @Override
@@ -46,6 +53,10 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
   @Override
   protected void executeAfterBlobStatementClosedButBeforeConnectionClose() throws SQLException {
     super.executeAfterBlobStatementClosedButBeforeConnectionClose();
+
+    if (!updateBlobContentInUpdateSQLNecessary && version() == newVersion) {
+      return;
+    }
 
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     SQLUpdateClause updateClause = new SQLUpdateClause(connection, querydslConfiguration, qBlob)
@@ -60,7 +71,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   @Override
   public long newVersion() {
-    return connectedBlob.version + 1;
+    return newVersion;
   }
 
   @Override

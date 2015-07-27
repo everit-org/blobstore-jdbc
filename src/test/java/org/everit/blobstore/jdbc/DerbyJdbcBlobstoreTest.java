@@ -93,8 +93,8 @@ public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Test
   @Ignore
   @Override
-  public void test04UpdateParallelBlobManipulationWithTransaction() {
-    super.test04UpdateParallelBlobManipulationWithTransaction();
+  public void test04ParallelBlobManipulationWithTwoTransactions() {
+    super.test04ParallelBlobManipulationWithTwoTransactions();
   }
 
 }

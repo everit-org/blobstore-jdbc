@@ -159,6 +159,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.everit.blobstore</groupId>
+      <artifactId>org.everit.blobstore.mem</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.hsqldb</groupId>
       <artifactId>hsqldb</artifactId>
       <version>2.3.3</version>
@@ -201,26 +207,18 @@
       <version>1.4.186</version>
       <scope>test</scope>
     </dependency>
+    
+    <!-- To test with oracle, download jdbc driver and install it into your local maven repo
+     with the command:
+
+     mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc7 -Dversion=12.1.0.2 \
+         -Dpackaging=jar -Dfile=ojdbc7_g.jar -DgeneratePom=true -->
+    <dependency>
+      <groupId>com.oracle</groupId>
+      <artifactId>ojdbc7</artifactId>
+      <version>12.1.0.2</version>
+    </dependency>
   </dependencies>
 
-  <profiles>
-    <profile>
-    <!-- To test with oracle, download jdbc driver and install it into your local maven repo
-         with the command:
-    
-         mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc7 -Dversion=12.1.0.2 \
-             -Dpackaging=jar -Dfile=ojdbc7_g.jar -DgeneratePom=true -->
-      <id>org.everit.blobstore.jdbc.test.oracle</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>com.oracle</groupId>
-          <artifactId>ojdbc7</artifactId>
-          <version>12.1.0.2</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
+
 </project>

@@ -78,8 +78,8 @@ public class JdbcBlobstore implements Blobstore {
     this.querydslConfiguration = resolveQuerydslConfiguration(configuration);
     this.emptyBlobExpression = resolveEmptyBlobExpression(configuration);
     this.pessimisticLockQueryEnhancer = resolvePessimistickLockQueryEnhancer(configuration);
-    this.updateSQLForModifiedBlobContentNecessary =
-        resolveUpdateSQLForModifiedBlobContentNecessary(configuration);
+    this.updateSQLForModifiedBlobContentNecessary = resolveUpdateSQLForModifiedBlobContentNecessary(
+        configuration);
   }
 
   /**
@@ -129,7 +129,6 @@ public class JdbcBlobstore implements Blobstore {
         pessimisticLockQueryEnhancer.enhanceQuery(query);
       }
       SQLBindings sqlBindings = query.getSQL();
-      System.out.println("///////////// " + sqlBindings.getSQL());
 
       PreparedStatement preparedStatement = connection.prepareStatement(sqlBindings.getSQL());
       ImmutableList<Object> bindings = sqlBindings.getBindings();
@@ -164,16 +163,15 @@ public class JdbcBlobstore implements Blobstore {
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     Long blobId;
     try {
-      blobId =
-          new SQLInsertClause(connection, querydslConfiguration, qBlob)
-              .set(qBlob.version_, 0L).set(qBlob.blob_, emptyBlobExpression)
-              .executeWithKey(qBlob.blobId);
+      blobId = new SQLInsertClause(connection, querydslConfiguration, qBlob)
+          .set(qBlob.version_, 0L).set(qBlob.blob_, emptyBlobExpression)
+          .executeWithKey(qBlob.blobId);
     } catch (RuntimeException | Error e) {
       closeCloseableDueToThrowable(connection, e);
       throw new RuntimeException(e);
     }
 
-    return updateBlob(blobId, connection);
+    return updateBlob(blobId, connection, false);
   }
 
   @Override
@@ -308,7 +306,7 @@ public class JdbcBlobstore implements Blobstore {
   @Override
   public BlobAccessor updateBlob(final long blobId) {
     Connection connection = getNewDatabaseConnection();
-    return updateBlob(blobId, connection);
+    return updateBlob(blobId, connection, true);
   }
 
   /**
@@ -320,10 +318,11 @@ public class JdbcBlobstore implements Blobstore {
    *          The connection of the database.
    * @return An accessor to modify the blob content.
    */
-  protected BlobAccessor updateBlob(final long blobId, final Connection connection) {
+  protected BlobAccessor updateBlob(final long blobId, final Connection connection,
+      final boolean incrementVersion) {
     QueriedBlob connectedBlob = connectBlob(blobId, true, connection);
     return new JdbcBlobAccessor(connectedBlob, connection, querydslConfiguration,
-        updateSQLForModifiedBlobContentNecessary);
+        updateSQLForModifiedBlobContentNecessary, incrementVersion);
   }
 
 }
