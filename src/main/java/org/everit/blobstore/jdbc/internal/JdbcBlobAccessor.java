@@ -54,13 +54,13 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
   protected void executeAfterBlobStatementClosedButBeforeConnectionClose() throws SQLException {
     super.executeAfterBlobStatementClosedButBeforeConnectionClose();
 
-    if (!updateBlobContentInUpdateSQLNecessary && version() == newVersion) {
+    if (!updateBlobContentInUpdateSQLNecessary && getVersion() == newVersion) {
       return;
     }
 
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     SQLUpdateClause updateClause = new SQLUpdateClause(connection, querydslConfiguration, qBlob)
-        .set(qBlob.version_, newVersion())
+        .set(qBlob.version_, getNewVersion())
         .where(qBlob.blobId.eq(connectedBlob.blobId));
 
     if (updateBlobContentInUpdateSQLNecessary) {
@@ -70,7 +70,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
   }
 
   @Override
-  public long newVersion() {
+  public long getNewVersion() {
     return newVersion;
   }
 
@@ -79,7 +79,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
     if (newLength < 0) {
       throw new IllegalArgumentException("Blob cannot be truncated to a negative length");
     }
-    if (newLength > size()) {
+    if (newLength > getSize()) {
       throw new IllegalArgumentException(
           "Blob size cannot be extended to a bigger size by calling truncate");
     }

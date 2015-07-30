@@ -87,7 +87,7 @@ public class JdbcBlobReader implements BlobReader {
   }
 
   @Override
-  public long position() {
+  public long getPosition() {
     return position;
   }
 
@@ -103,7 +103,7 @@ public class JdbcBlobReader implements BlobReader {
 
     // Pre check is necessary as MySQL JDBC driver cannot handle if length is greater than the
     // remaining size of the blob.
-    long size = size();
+    long size = getSize();
     int validLen = len;
     if (size < position + len) {
       validLen = (int) (size - position);
@@ -126,14 +126,14 @@ public class JdbcBlobReader implements BlobReader {
     if (pos < 0) {
       throw new IndexOutOfBoundsException("Position cannot be a negative number");
     }
-    if (pos > size()) {
+    if (pos > getSize()) {
       throw new IndexOutOfBoundsException("Position is higher than the size of the blob");
     }
     this.position = pos;
   }
 
   @Override
-  public long size() {
+  public long getSize() {
     try {
       return connectedBlob.blobChannel.getBlob().length();
     } catch (SQLException e) {
@@ -143,7 +143,7 @@ public class JdbcBlobReader implements BlobReader {
   }
 
   @Override
-  public long version() {
+  public long getVersion() {
     return connectedBlob.version;
   }
 
