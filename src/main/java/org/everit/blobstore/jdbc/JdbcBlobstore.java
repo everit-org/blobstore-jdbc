@@ -25,10 +25,10 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.everit.blobstore.api.BlobAccessor;
-import org.everit.blobstore.api.BlobReader;
-import org.everit.blobstore.api.Blobstore;
-import org.everit.blobstore.api.NoSuchBlobException;
+import org.everit.blobstore.BlobAccessor;
+import org.everit.blobstore.BlobReader;
+import org.everit.blobstore.Blobstore;
+import org.everit.blobstore.NoSuchBlobException;
 import org.everit.blobstore.jdbc.internal.BlobChannel;
 import org.everit.blobstore.jdbc.internal.BytesBlobChannel;
 import org.everit.blobstore.jdbc.internal.ConnectedBlob;

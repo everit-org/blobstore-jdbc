@@ -18,7 +18,7 @@ package org.everit.blobstore.jdbc.internal;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.everit.blobstore.api.BlobReader;
+import org.everit.blobstore.BlobReader;
 
 /**
  * JDBC based {@link BlobReader} implementation that uses {@link java.sql.Blob#getBytes(long, int)}

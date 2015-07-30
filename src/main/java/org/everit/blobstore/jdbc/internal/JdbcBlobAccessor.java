@@ -18,7 +18,7 @@ package org.everit.blobstore.jdbc.internal;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.everit.blobstore.api.BlobAccessor;
+import org.everit.blobstore.BlobAccessor;
 import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
 import com.querydsl.sql.Configuration;

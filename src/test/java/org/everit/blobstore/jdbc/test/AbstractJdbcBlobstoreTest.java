@@ -24,7 +24,7 @@ import javax.transaction.xa.XAException;
 
 import org.apache.commons.dbcp2.managed.BasicManagedDataSource;
 import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
-import org.everit.blobstore.api.Blobstore;
+import org.everit.blobstore.Blobstore;
 import org.everit.blobstore.cache.CachedBlobstore;
 import org.everit.blobstore.jdbc.JdbcBlobstore;
 import org.everit.blobstore.mem.MemBlobstore;
