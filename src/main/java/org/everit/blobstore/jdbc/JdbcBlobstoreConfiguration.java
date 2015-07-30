@@ -17,6 +17,7 @@ package org.everit.blobstore.jdbc;
 
 import java.sql.Blob;
 
+import com.querydsl.core.QueryFlag;
 import com.querydsl.core.types.Expression;
 import com.querydsl.sql.Configuration;
 
@@ -26,24 +27,36 @@ import com.querydsl.sql.Configuration;
 public class JdbcBlobstoreConfiguration {
 
   /**
+   * The mode how the blob is accessed. If <code>null</code>, the mode is automatically guessed from
+   * the type of the database.
+   */
+  public BlobAccessMode blobAccessMode;
+
+  /**
+   * Selection expression in SQL queries of the Blob field. If <code>null</code> it is automatically
+   * derived based on the database metadata.
+   */
+  public Expression<Blob> blobSelectionExpression;
+
+  /**
    * Expression that generates the empty blob. If <code>null</code> the empty blob expression is
    * automatically guessed from the type of the database.
    */
-  public Expression<Blob> emptyBlobExpression = null;
+  public Expression<Blob> emptyBlobExpression;
 
   /**
-   * Query enhancer to do pessimistic locking on the selected record.
+   * Query flag that adds pessimistic locking logic.
    */
-  public QueryEnhancer pessimisticLockQueryEnhancer = null;
+  public QueryFlag pessimisticLockQueryFlag;
 
   /**
    * Configuration of queryDsl to construct the SQL queries. If null, it is guessed based on the
    * metadata of the database connection.
    */
-  public Configuration querydslConfiguration = null;
+  public Configuration querydslConfiguration;
 
   /**
    * Whether calling update SQL after manipulating the Blob instance is necessary or not.
    */
-  public Boolean updateSQLForModifiedBlobContentNecessary = null;
+  public Boolean updateSQLForModifiedBlobContentNecessary;
 }

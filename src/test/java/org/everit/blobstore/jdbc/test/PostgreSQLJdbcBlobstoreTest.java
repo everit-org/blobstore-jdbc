@@ -13,28 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.everit.blobstore.jdbc;
+package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
-import com.querydsl.sql.MySQLTemplates;
+import org.postgresql.xa.PGXADataSource;
+
+import com.querydsl.sql.PostgreSQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 
-public class MySQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
   protected SQLTemplates getSQLTemplates() {
-    return new MySQLTemplates(true);
+    return new PostgreSQLTemplates(true);
   }
 
   @Override
   protected XADataSource getXADataSource() {
-    MysqlXADataSource xaDataSource = new MysqlXADataSource();
+    PGXADataSource xaDataSource = new PGXADataSource();
     xaDataSource.setServerName("localhost");
+    xaDataSource.setPortNumber(5433);
     xaDataSource.setUser("test");
     xaDataSource.setPassword("test");
-    xaDataSource.setDatabaseName("blobstore");
+    xaDataSource.setDatabaseName("blobstore_jdbc");
     return xaDataSource;
   }
 

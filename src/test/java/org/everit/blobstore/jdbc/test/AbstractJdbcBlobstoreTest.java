@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.everit.blobstore.jdbc;
+package org.everit.blobstore.jdbc.test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 
 import javax.sql.XADataSource;
 import javax.transaction.xa.XAException;
@@ -24,11 +25,15 @@ import javax.transaction.xa.XAException;
 import org.apache.commons.dbcp2.managed.BasicManagedDataSource;
 import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
 import org.everit.blobstore.api.Blobstore;
+import org.everit.blobstore.cache.CachedBlobstore;
+import org.everit.blobstore.jdbc.JdbcBlobstore;
 import org.everit.blobstore.mem.MemBlobstore;
 import org.everit.blobstore.testbase.AbstractBlobstoreTest;
 import org.everit.blobstore.testbase.BlobstoreStressAndConsistencyTester;
 import org.everit.osgi.transaction.helper.api.TransactionHelper;
 import org.everit.osgi.transaction.helper.internal.TransactionHelperImpl;
+import org.everit.transaction.map.managed.ManagedMap;
+import org.everit.transaction.map.readcommited.ReadCommitedTransactionalMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,9 +88,6 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
           "META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml",
           new ClassLoaderResourceAccessor(), databaseConnection);
 
-      // StringWriter sw = new StringWriter();
-      // liquibase.update((Contexts) null, sw);
-      // System.out.println("Update SQL: \n" + sw.toString());
       liquibase.update((Contexts) null);
     } catch (LiquibaseException | SQLException e) {
       try {
@@ -127,9 +129,48 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
   @Test
   public void testConsistency() {
+    System.out.println("---------- Consistency Test --------------");
     MemBlobstore memBlobstore = new MemBlobstore(transactionManager);
-    BlobstoreStressAndConsistencyTester.runStressTest(
-        new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration(),
-        transactionHelper, getBlobStore(), memBlobstore);
+    BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
+        new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
+
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionHelper,
+        getBlobStore(), memBlobstore);
   }
+
+  @Test
+  public void testPerformance() {
+    System.out.println("---------- Performance Test --------------");
+    BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
+        new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
+
+    testConfiguration.initialBlobNum = 10;
+    testConfiguration.createActionChancePart = 0;
+    testConfiguration.updateActionChancePart = 0;
+    testConfiguration.deleteActionChancePart = 0;
+
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionHelper,
+        getBlobStore());
+  }
+
+  @Test
+  public void testPerformanceWithCache() {
+    System.out.println("---------- Performance with Cache Test --------------");
+
+    BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
+        new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
+
+    testConfiguration.initialBlobNum = 10;
+    testConfiguration.createActionChancePart = 0;
+    testConfiguration.updateActionChancePart = 0;
+    testConfiguration.deleteActionChancePart = 0;
+
+    CachedBlobstore cachedBlobstore = new CachedBlobstore(getBlobStore(),
+        new ManagedMap<>(new ReadCommitedTransactionalMap<>(new HashMap<>()), transactionManager),
+        1024, transactionManager);
+
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionHelper,
+        cachedBlobstore);
+  }
+
 }

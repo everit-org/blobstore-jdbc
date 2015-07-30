@@ -22,6 +22,10 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
+/**
+ * An empty {@link Blob} implementation that is used to create blobs in the database with no
+ * content.
+ */
 public class EmptyReadOnlyBlob implements Blob {
 
   @Override

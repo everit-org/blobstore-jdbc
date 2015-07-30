@@ -32,7 +32,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   protected final boolean updateBlobContentInUpdateSQLNecessary;
 
-  public JdbcBlobAccessor(final QueriedBlob connectedBlob, final Connection connection,
+  public JdbcBlobAccessor(final ConnectedBlob connectedBlob, final Connection connection,
       final Configuration querydslConfiguration,
       final boolean updateBlobContentInUpdateSQLNecessary, final boolean incrementVersion) {
     super(connectedBlob, connection);
@@ -64,7 +64,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
         .where(qBlob.blobId.eq(connectedBlob.blobId));
 
     if (updateBlobContentInUpdateSQLNecessary) {
-      updateClause.set(qBlob.blob_, connectedBlob.blob);
+      updateClause.set(qBlob.blob_, connectedBlob.blobChannel.getBlob());
     }
     updateClause.execute();
   }
@@ -76,8 +76,19 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   @Override
   public void truncate(final long newLength) {
+    if (newLength < 0) {
+      throw new IllegalArgumentException("Blob cannot be truncated to a negative length");
+    }
+    if (newLength > size()) {
+      throw new IllegalArgumentException(
+          "Blob size cannot be extended to a bigger size by calling truncate");
+    }
+    if (position > newLength) {
+      throw new IllegalArgumentException(
+          "Blob cannot be truncated to a size that is before the current position");
+    }
     try {
-      connectedBlob.blob.truncate(newLength);
+      connectedBlob.blobChannel.getBlob().truncate(newLength);
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
@@ -94,13 +105,9 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
     } else if (len == 0) {
       return;
     }
-    try {
-      connectedBlob.blob.setBytes(position + 1, b, off, len);
-      position += len;
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
-    }
+
+    connectedBlob.blobChannel.write(position, b, off, len);
+    position += len;
 
   }
 

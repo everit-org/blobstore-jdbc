@@ -15,7 +15,6 @@
  */
 package org.everit.blobstore.jdbc.internal;
 
-import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -23,9 +22,9 @@ import java.sql.Statement;
  * Holder class of a blob and its version that was queried from the database.
  *
  */
-public class QueriedBlob {
+public class ConnectedBlob {
 
-  public final Blob blob;
+  public final BlobChannel blobChannel;
 
   public final long blobId;
 
@@ -33,23 +32,38 @@ public class QueriedBlob {
 
   public final long version;
 
-  public QueriedBlob(final long blobId, final Blob blob, final long version,
+  public ConnectedBlob(final long blobId, final BlobChannel blobChannel, final long version,
       final Statement statement) {
     this.blobId = blobId;
-    this.blob = blob;
+    this.blobChannel = blobChannel;
     this.version = version;
     this.statement = statement;
   }
 
   /**
-   * Closes the statement that queried this blob.
+   * Closes the {@link BlobChannel} and the statement that queried this blob.
    */
-  public void closeStatement() {
+  public void close() {
+    Throwable thrownException = null;
+    try {
+      blobChannel.close();
+    } catch (RuntimeException | Error e) {
+      thrownException = e;
+    }
+
     try {
       statement.close();
     } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
+      if (thrownException == null) {
+        thrownException = e;
+      } else {
+        thrownException.addSuppressed(e);
+      }
+    }
+
+    if (thrownException != null) {
+      // TODO
+      throw new RuntimeException(thrownException);
     }
   }
 

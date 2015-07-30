@@ -29,21 +29,30 @@ import org.everit.blobstore.api.BlobAccessor;
 import org.everit.blobstore.api.BlobReader;
 import org.everit.blobstore.api.Blobstore;
 import org.everit.blobstore.api.NoSuchBlobException;
+import org.everit.blobstore.jdbc.internal.BlobChannel;
+import org.everit.blobstore.jdbc.internal.BytesBlobChannel;
+import org.everit.blobstore.jdbc.internal.ConnectedBlob;
 import org.everit.blobstore.jdbc.internal.DatabaseTypeEnum;
+import org.everit.blobstore.jdbc.internal.EmptyReadOnlyBlob;
 import org.everit.blobstore.jdbc.internal.JdbcBlobAccessor;
 import org.everit.blobstore.jdbc.internal.JdbcBlobReader;
-import org.everit.blobstore.jdbc.internal.JdbcBlobstoreConfigurationUtil;
-import org.everit.blobstore.jdbc.internal.QueriedBlob;
+import org.everit.blobstore.jdbc.internal.StreamBlobChannel;
 import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.UnmodifiableIterator;
+import com.querydsl.core.QueryFlag;
+import com.querydsl.core.QueryFlag.Position;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.sql.Configuration;
 import com.querydsl.sql.SQLBindings;
+import com.querydsl.sql.SQLExpressions;
+import com.querydsl.sql.SQLOps;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.SQLTemplates;
+import com.querydsl.sql.SQLTemplatesRegistry;
 import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLInsertClause;
 
@@ -53,17 +62,21 @@ import com.querydsl.sql.dml.SQLInsertClause;
  */
 public class JdbcBlobstore implements Blobstore {
 
+  protected final BlobAccessMode blobAccessMode;
+
+  protected final Expression<?> blobSelectionExpression;
+
   protected final DataSource dataSource;
 
   protected final Expression<Blob> emptyBlobExpression;
 
   private DatabaseTypeEnum guessedDatabaseType;
 
-  protected final QueryEnhancer pessimisticLockQueryEnhancer;
+  protected final boolean locatorUpdatesCopy;
+
+  protected final QueryFlag pessimisticLockQueryFlag;
 
   protected final Configuration querydslConfiguration;
-
-  protected final boolean updateSQLForModifiedBlobContentNecessary;
 
   public JdbcBlobstore(final DataSource dataSource) {
     this(dataSource, null);
@@ -77,9 +90,11 @@ public class JdbcBlobstore implements Blobstore {
     this.dataSource = dataSource;
     this.querydslConfiguration = resolveQuerydslConfiguration(configuration);
     this.emptyBlobExpression = resolveEmptyBlobExpression(configuration);
-    this.pessimisticLockQueryEnhancer = resolvePessimistickLockQueryEnhancer(configuration);
-    this.updateSQLForModifiedBlobContentNecessary = resolveUpdateSQLForModifiedBlobContentNecessary(
+    this.pessimisticLockQueryFlag = resolvePessimistickLockQueryFlag(configuration);
+    this.locatorUpdatesCopy = resolveLocatorUpdatesCopy(
         configuration);
+    this.blobSelectionExpression = resolveBlobSelectionExpression(configuration);
+    this.blobAccessMode = resolveBlobAccessMode(configuration);
   }
 
   /**
@@ -117,20 +132,23 @@ public class JdbcBlobstore implements Blobstore {
    *          The database connection.
    * @return The blob and its current version.
    */
-  protected QueriedBlob connectBlob(final long blobId, final boolean forUpdate,
+  protected ConnectedBlob connectBlob(final long blobId, final boolean forUpdate,
       final Connection connection) {
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     try {
       SQLQuery<Tuple> query = new SQLQuery<>(connection, querydslConfiguration)
-          .select(qBlob.blobId, qBlob.version_.as("version_"), qBlob.blob_.as("blob_"))
+          .select(qBlob.blobId, qBlob.version_.as("version_"),
+              Expressions.as(blobSelectionExpression, "blob_")) // CS_DISABLE_LINE_LENGTH
+                                                                // qBlob.blob_.as("blob_")
           .from(qBlob)
           .where(qBlob.blobId.eq(blobId));
       if (forUpdate) {
-        pessimisticLockQueryEnhancer.enhanceQuery(query);
+        query.addFlag(pessimisticLockQueryFlag);
       }
       SQLBindings sqlBindings = query.getSQL();
 
-      PreparedStatement preparedStatement = connection.prepareStatement(sqlBindings.getSQL());
+      String sql = sqlBindings.getSQL();
+      PreparedStatement preparedStatement = connection.prepareStatement(sql);
       ImmutableList<Object> bindings = sqlBindings.getBindings();
       int i = 0;
       UnmodifiableIterator<Object> iterator = bindings.iterator();
@@ -147,7 +165,13 @@ public class JdbcBlobstore implements Blobstore {
       long version = resultSet.getLong("version_");
       Blob blob = resultSet.getBlob("blob_");
 
-      return new QueriedBlob(blobId, blob, version, preparedStatement);
+      BlobChannel blobChannel;
+      if (blobAccessMode == BlobAccessMode.BYTES) {
+        blobChannel = new BytesBlobChannel(blob);
+      } else {
+        blobChannel = new StreamBlobChannel(blob);
+      }
+      return new ConnectedBlob(blobId, blobChannel, version, preparedStatement);
 
     } catch (SQLException | RuntimeException | Error e) {
       closeCloseableDueToThrowable(connection, e);
@@ -243,15 +267,81 @@ public class JdbcBlobstore implements Blobstore {
   @Override
   public BlobReader readBlob(final long blobId) {
     Connection connection = getNewDatabaseConnection();
-    QueriedBlob connectedBlob = connectBlob(blobId, false, connection);
+    ConnectedBlob connectedBlob = connectBlob(blobId, false, connection);
     return new JdbcBlobReader(connectedBlob, connection);
   }
 
   @Override
   public BlobReader readBlobForUpdate(final long blobId) {
     Connection connection = getNewDatabaseConnection();
-    QueriedBlob connectedBlob = connectBlob(blobId, true, connection);
+    ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
     return new JdbcBlobReader(connectedBlob, connection);
+  }
+
+  /**
+   * Resolving the access mode how the database should be accessed.
+   *
+   * @param configuration
+   *          The configuration that might contain pre-defined access mode.
+   * @return The database access mode.
+   */
+  protected BlobAccessMode resolveBlobAccessMode(final JdbcBlobstoreConfiguration configuration) {
+
+    if (configuration != null && configuration.blobAccessMode != null) {
+      return blobAccessMode;
+    }
+
+    BlobAccessMode result;
+    DatabaseTypeEnum databaseType = guessDatabaseType();
+    switch (databaseType) {
+      case DERBY:
+        result = BlobAccessMode.STREAM;
+        break;
+      case HSQLDB:
+        result = BlobAccessMode.STREAM;
+        break;
+      case MYSQL:
+        result = BlobAccessMode.STREAM;
+        break;
+      case ORACLE:
+        result = BlobAccessMode.STREAM;
+        break;
+      case POSTGRESQL:
+        result = BlobAccessMode.STREAM;
+        break;
+      case SQLSERVER:
+        result = BlobAccessMode.STREAM;
+        break;
+      default:
+        result = BlobAccessMode.BYTES;
+        break;
+    }
+
+    return result;
+  }
+
+  protected Expression<?> resolveBlobSelectionExpression(
+      final JdbcBlobstoreConfiguration configuration) {
+
+    if (configuration != null && configuration.blobSelectionExpression != null) {
+      return configuration.blobSelectionExpression;
+    }
+
+    DatabaseTypeEnum databaseType = guessDatabaseType();
+    if (databaseType != DatabaseTypeEnum.MYSQL) {
+      return QBlobstoreBlob.blobstoreBlob.blob_;
+    }
+
+    try (Connection connection = dataSource.getConnection()) {
+      if (!connection.getMetaData().locatorsUpdateCopy()) {
+        return Expressions.constant(QBlobstoreBlob.blobstoreBlob.blob_.getMetadata().getName());
+      } else {
+        return QBlobstoreBlob.blobstoreBlob.blob_;
+      }
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
   }
 
   protected Expression<Blob> resolveEmptyBlobExpression(
@@ -262,20 +352,38 @@ public class JdbcBlobstore implements Blobstore {
     }
 
     DatabaseTypeEnum databaseType = guessDatabaseType();
-    return JdbcBlobstoreConfigurationUtil
-        .getDefaultEmptyBlobExpressionForDatabase(databaseType);
+
+    if (databaseType == DatabaseTypeEnum.ORACLE) {
+      return SQLExpressions.relationalFunctionCall(Blob.class, "empty_blob");
+    } else {
+      return Expressions.constant(new EmptyReadOnlyBlob());
+    }
   }
 
-  protected QueryEnhancer resolvePessimistickLockQueryEnhancer(
+  protected boolean resolveLocatorUpdatesCopy(
       final JdbcBlobstoreConfiguration configuration) {
 
-    if (configuration != null && configuration.pessimisticLockQueryEnhancer != null) {
-      return configuration.pessimisticLockQueryEnhancer;
+    try (Connection connection = dataSource.getConnection()) {
+      return connection.getMetaData().locatorsUpdateCopy();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected QueryFlag resolvePessimistickLockQueryFlag(
+      final JdbcBlobstoreConfiguration configuration) {
+
+    if (configuration != null && configuration.pessimisticLockQueryFlag != null) {
+      return configuration.pessimisticLockQueryFlag;
     }
 
     DatabaseTypeEnum databaseType = guessDatabaseType();
-    return JdbcBlobstoreConfigurationUtil
-        .getDefaultPessimisticLockQueryEnhancerForDatabase(databaseType);
+    if (databaseType == DatabaseTypeEnum.SQLSERVER) {
+      return new QueryFlag(Position.BEFORE_FILTERS, "\nwith (updlock)");
+    } else {
+      return SQLOps.FOR_UPDATE_FLAG;
+    }
   }
 
   protected Configuration resolveQuerydslConfiguration(
@@ -283,24 +391,14 @@ public class JdbcBlobstore implements Blobstore {
     if (blobstoreConfiguration != null && blobstoreConfiguration.querydslConfiguration != null) {
       return querydslConfiguration;
     }
-    DatabaseTypeEnum guessedDatabaseType = guessDatabaseType();
 
-    SQLTemplates sqlTemplates = JdbcBlobstoreConfigurationUtil
-        .getDefaultSQLTemplatesForDatabase(guessedDatabaseType);
-    Configuration result = new Configuration(sqlTemplates);
-    return result;
-  }
-
-  protected boolean resolveUpdateSQLForModifiedBlobContentNecessary(
-      final JdbcBlobstoreConfiguration configuration) {
-
-    if (configuration != null && configuration.updateSQLForModifiedBlobContentNecessary != null) {
-      return configuration.updateSQLForModifiedBlobContentNecessary;
+    try (Connection connection = dataSource.getConnection()) {
+      SQLTemplates templates = new SQLTemplatesRegistry().getTemplates(connection.getMetaData());
+      return new Configuration(templates);
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
     }
-
-    DatabaseTypeEnum databaseType = guessDatabaseType();
-    return JdbcBlobstoreConfigurationUtil
-        .getDefaultUpdateSQLForModifiedBlobContentNecessaryForDatabase(databaseType);
   }
 
   @Override
@@ -320,9 +418,9 @@ public class JdbcBlobstore implements Blobstore {
    */
   protected BlobAccessor updateBlob(final long blobId, final Connection connection,
       final boolean incrementVersion) {
-    QueriedBlob connectedBlob = connectBlob(blobId, true, connection);
+    ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
     return new JdbcBlobAccessor(connectedBlob, connection, querydslConfiguration,
-        updateSQLForModifiedBlobContentNecessary, incrementVersion);
+        locatorUpdatesCopy, incrementVersion);
   }
 
 }

@@ -13,31 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.everit.blobstore.jdbc;
+package org.everit.blobstore.jdbc.test;
+
+import java.sql.SQLException;
 
 import javax.sql.XADataSource;
 
-import org.postgresql.xa.PGXADataSource;
-
-import com.querydsl.sql.PostgreSQLTemplates;
+import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.SQLTemplates;
 
-public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+import oracle.jdbc.xa.client.OracleXADataSource;
+
+public class OracleJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
   protected SQLTemplates getSQLTemplates() {
-    return new PostgreSQLTemplates(true);
+    return new OracleTemplates(true);
   }
 
   @Override
   protected XADataSource getXADataSource() {
-    PGXADataSource xaDataSource = new PGXADataSource();
-    xaDataSource.setServerName("localhost");
-    xaDataSource.setPortNumber(5432);
-    xaDataSource.setUser("test");
-    xaDataSource.setPassword("test");
-    xaDataSource.setDatabaseName("blobstore_jdbc");
-    return xaDataSource;
+    OracleXADataSource oracleXADataSource;
+    try {
+      oracleXADataSource = new OracleXADataSource();
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+    oracleXADataSource.setURL("jdbc:oracle:thin:@localhost:1521/orcl");
+    oracleXADataSource.setUser("c##test");
+    oracleXADataSource.setPassword("test");
+    // TODO Auto-generated method stub
+    return oracleXADataSource;
   }
-
 }

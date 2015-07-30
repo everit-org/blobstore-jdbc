@@ -27,13 +27,13 @@ import org.everit.blobstore.api.BlobReader;
  */
 public class JdbcBlobReader implements BlobReader {
 
-  protected final QueriedBlob connectedBlob;
+  protected final ConnectedBlob connectedBlob;
 
   protected final Connection connection;
 
   protected long position = 0;
 
-  public JdbcBlobReader(final QueriedBlob connectedBlob, final Connection connection) {
+  public JdbcBlobReader(final ConnectedBlob connectedBlob, final Connection connection) {
     this.connectedBlob = connectedBlob;
     this.connection = connection;
   }
@@ -42,7 +42,7 @@ public class JdbcBlobReader implements BlobReader {
   public void close() {
     Throwable thrownException = null;
     try {
-      connectedBlob.closeStatement();
+      connectedBlob.close();
     } catch (RuntimeException | Error e) {
       thrownException = e;
     }
@@ -115,14 +115,10 @@ public class JdbcBlobReader implements BlobReader {
       throw new IndexOutOfBoundsException();
     }
 
-    try {
-      byte[] bytes = connectedBlob.blob.getBytes(position + 1, validLen);
-      System.arraycopy(bytes, 0, b, off, bytes.length);
-      return bytes.length;
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
-    }
+    int readByteNum = connectedBlob.blobChannel.read(position, b, off, len);
+    position += readByteNum;
+    return readByteNum;
+
   }
 
   @Override
@@ -139,7 +135,7 @@ public class JdbcBlobReader implements BlobReader {
   @Override
   public long size() {
     try {
-      return connectedBlob.blob.length();
+      return connectedBlob.blobChannel.getBlob().length();
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
