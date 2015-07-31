@@ -48,14 +48,14 @@ public class HsqldbJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Test
   @Ignore
   @Override
-  public void test03ParallelBlobUpdateAndRead() {
-    super.test03ParallelBlobUpdateAndRead();
+  public void testReadBlobDuringOngoingUpdateOnOtherThread() {
+    super.testReadBlobDuringOngoingUpdateOnOtherThread();
   }
 
   @Test
   @Ignore
   @Override
-  public void test04ParallelBlobManipulationWithTwoTransactions() {
-    super.test04ParallelBlobManipulationWithTwoTransactions();
+  public void testParallelBlobManipulationWithTwoTransactions() {
+    super.testParallelBlobManipulationWithTwoTransactions();
   }
 }

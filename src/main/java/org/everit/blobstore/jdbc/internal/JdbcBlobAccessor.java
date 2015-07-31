@@ -64,7 +64,7 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
         .where(qBlob.blobId.eq(connectedBlob.blobId));
 
     if (updateBlobContentInUpdateSQLNecessary) {
-      updateClause.set(qBlob.blob_, connectedBlob.blobChannel.getBlob());
+      updateClause.set(qBlob.blob_, connectedBlob.blobChannel.getBlobExpression());
     }
     updateClause.execute();
   }
@@ -87,12 +87,8 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
       throw new IllegalArgumentException(
           "Blob cannot be truncated to a size that is before the current position");
     }
-    try {
-      connectedBlob.blobChannel.getBlob().truncate(newLength);
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
-    }
+
+    connectedBlob.blobChannel.truncate(newLength);
   }
 
   @Override

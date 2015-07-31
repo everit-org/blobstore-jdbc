@@ -18,6 +18,9 @@ package org.everit.blobstore.jdbc.internal;
 import java.sql.Blob;
 import java.sql.SQLException;
 
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.Expressions;
+
 /**
  * {@link BlobChannel} that uses {@link java.sql.Blob#getBytes(long, int)} and
  * {@link java.sql.Blob#setBytes(long, byte[], int, int)} to read and write blobs. *
@@ -36,8 +39,18 @@ public class BytesBlobChannel implements BlobChannel {
   }
 
   @Override
-  public Blob getBlob() {
-    return blob;
+  public Expression<Blob> getBlobExpression() {
+    return Expressions.constant(blob);
+  }
+
+  @Override
+  public long getBlobSize() {
+    try {
+      return blob.length();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -47,6 +60,16 @@ public class BytesBlobChannel implements BlobChannel {
       int readByteNum = bytes.length;
       System.arraycopy(bytes, 0, buffer, offset, readByteNum);
       return readByteNum;
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void truncate(final long length) {
+    try {
+      blob.truncate(length);
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);

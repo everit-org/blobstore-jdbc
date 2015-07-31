@@ -47,10 +47,16 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.sql.Configuration;
+import com.querydsl.sql.DerbyTemplates;
+import com.querydsl.sql.HSQLDBTemplates;
+import com.querydsl.sql.MySQLTemplates;
+import com.querydsl.sql.OracleTemplates;
+import com.querydsl.sql.PostgreSQLTemplates;
 import com.querydsl.sql.SQLBindings;
 import com.querydsl.sql.SQLExpressions;
 import com.querydsl.sql.SQLOps;
 import com.querydsl.sql.SQLQuery;
+import com.querydsl.sql.SQLServerTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.SQLTemplatesRegistry;
 import com.querydsl.sql.dml.SQLDeleteClause;
@@ -298,7 +304,7 @@ public class JdbcBlobstore implements Blobstore {
         result = BlobAccessMode.STREAM;
         break;
       case HSQLDB:
-        result = BlobAccessMode.STREAM;
+        result = BlobAccessMode.BYTES;
         break;
       case MYSQL:
         result = BlobAccessMode.STREAM;
@@ -310,7 +316,7 @@ public class JdbcBlobstore implements Blobstore {
         result = BlobAccessMode.STREAM;
         break;
       case SQLSERVER:
-        result = BlobAccessMode.STREAM;
+        result = BlobAccessMode.BYTES;
         break;
       default:
         result = BlobAccessMode.BYTES;
@@ -363,6 +369,15 @@ public class JdbcBlobstore implements Blobstore {
   protected boolean resolveLocatorUpdatesCopy(
       final JdbcBlobstoreConfiguration configuration) {
 
+    if (configuration != null && configuration.locatorUpdatesCopy != null) {
+      return configuration.locatorUpdatesCopy;
+    }
+
+    DatabaseTypeEnum databaseType = guessDatabaseType();
+    if (databaseType == DatabaseTypeEnum.HSQLDB) {
+      return true;
+    }
+
     try (Connection connection = dataSource.getConnection()) {
       return connection.getMetaData().locatorsUpdateCopy();
     } catch (SQLException e) {
@@ -392,13 +407,39 @@ public class JdbcBlobstore implements Blobstore {
       return querydslConfiguration;
     }
 
-    try (Connection connection = dataSource.getConnection()) {
-      SQLTemplates templates = new SQLTemplatesRegistry().getTemplates(connection.getMetaData());
-      return new Configuration(templates);
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
+    DatabaseTypeEnum databaseType = guessDatabaseType();
+
+    SQLTemplates templates;
+    switch (databaseType) {
+      case DERBY:
+        templates = new DerbyTemplates(true);
+        break;
+      case HSQLDB:
+        templates = new HSQLDBTemplates(true);
+        break;
+      case MYSQL:
+        templates = new MySQLTemplates(true);
+        break;
+      case ORACLE:
+        templates = new OracleTemplates(true);
+        break;
+      case POSTGRESQL:
+        templates = new PostgreSQLTemplates(true);
+        break;
+      case SQLSERVER:
+        templates = new SQLServerTemplates(true);
+        break;
+      default:
+        try (Connection connection = dataSource.getConnection()) {
+          templates = new SQLTemplatesRegistry().getTemplates(connection.getMetaData());
+
+        } catch (SQLException e) {
+          // TODO Auto-generated catch block
+          throw new RuntimeException(e);
+        }
     }
+    return new Configuration(templates);
+
   }
 
   @Override

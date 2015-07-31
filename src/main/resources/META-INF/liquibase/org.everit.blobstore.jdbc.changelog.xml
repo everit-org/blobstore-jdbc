@@ -18,7 +18,8 @@
 -->
 
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd" >
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"
+  objectQuotingStrategy="QUOTE_ALL_OBJECTS">
 
   <property name="blob.type" value="oid" dbms="postgresql" />
   <property name="blob.type" value="longblob" dbms="mariadb" />
@@ -42,26 +43,26 @@ DECLARE
     blobstore_tmp_row RECORD;
 BEGIN
 IF (TG_OP = 'UPDATE') THEN
-  IF (NEW.BLOB_ != OLD.BLOB_) THEN
-    PERFORM lo_unlink(OLD.BLOB_);
+  IF (NEW."BLOB_" != OLD."BLOB_") THEN
+    PERFORM lo_unlink(OLD."BLOB_");
   END IF;
   RETURN NEW;
 ELSIF (TG_OP = 'DELETE') THEN
-  PERFORM lo_unlink(OLD.BLOB_);
+  PERFORM lo_unlink(OLD."BLOB_");
   RETURN OLD;
 ELSIF (TG_OP = 'TRUNCATE') THEN
-  FOR blobstore_tmp_row IN SELECT * FROM BLOBSTORE_BLOB LOOP
-    PERFORM lo_unlink(blobstore_tmp_row.BLOB_);
+  FOR blobstore_tmp_row IN SELECT * FROM "BLOBSTORE_BLOB" LOOP
+    PERFORM lo_unlink(blobstore_tmp_row."BLOB_");
   END LOOP;
-  DELETE FROM pg_largeobject WHERE loid IN (SELECT BLOB_ FROM BLOBSTORE_BLOB);
+  DELETE FROM pg_largeobject WHERE loid IN (SELECT "BLOB_" FROM "BLOBSTORE_BLOB");
 END IF;
 RETURN null;
 END;
 $BODY$ LANGUAGE plpgsql</createProcedure>
-    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage BEFORE UPDATE OR DELETE ON BLOBSTORE_BLOB
+    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage BEFORE UPDATE OR DELETE ON "BLOBSTORE_BLOB"
       FOR EACH ROW EXECUTE PROCEDURE blobstore_manage()
     </sql>
-    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage_truncate BEFORE TRUNCATE ON BLOBSTORE_BLOB
+    <sql dbms="postgresql">CREATE TRIGGER blobstore_manage_truncate BEFORE TRUNCATE ON "BLOBSTORE_BLOB"
       EXECUTE PROCEDURE blobstore_manage()
     </sql>
   </changeSet>

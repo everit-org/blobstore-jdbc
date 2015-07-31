@@ -18,6 +18,8 @@ package org.everit.blobstore.jdbc.internal;
 import java.io.Closeable;
 import java.sql.Blob;
 
+import com.querydsl.core.types.Expression;
+
 /**
  * Channel to access {@link Blob}s for read and write.
  */
@@ -26,9 +28,13 @@ public interface BlobChannel extends Closeable {
   @Override
   void close();
 
-  Blob getBlob();
+  Expression<Blob> getBlobExpression();
+
+  long getBlobSize();
 
   int read(long position, byte[] buffer, int offset, int length);
+
+  void truncate(long length);
 
   void write(long position, byte[] buffer, int offset, int length);
 }

@@ -23,6 +23,9 @@ import java.io.UncheckedIOException;
 import java.sql.Blob;
 import java.sql.SQLException;
 
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.Expressions;
+
 /**
  * {@link BlobChannel} implementation that uses {@link Blob#getBinaryStream(long, long)} and
  * {@link Blob#setBinaryStream(long)} functions to read and write data. The streams are only closed
@@ -67,8 +70,21 @@ public class StreamBlobChannel implements BlobChannel {
   }
 
   @Override
-  public Blob getBlob() {
-    return blob;
+  public Expression<Blob> getBlobExpression() {
+    return Expressions.constant(blob);
+  }
+
+  @Override
+  public long getBlobSize() {
+    if (outputStream != null) {
+      close();
+    }
+    try {
+      return blob.length();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -91,6 +107,17 @@ public class StreamBlobChannel implements BlobChannel {
     } catch (IOException e) {
       // TODO Auto-generated catch block
       throw new UncheckedIOException(e);
+    }
+  }
+
+  @Override
+  public void truncate(final long length) {
+    close();
+    try {
+      blob.truncate(length);
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
     }
   }
 

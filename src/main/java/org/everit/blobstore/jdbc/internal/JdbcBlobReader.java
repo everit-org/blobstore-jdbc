@@ -92,6 +92,16 @@ public class JdbcBlobReader implements BlobReader {
   }
 
   @Override
+  public long getSize() {
+    return connectedBlob.blobChannel.getBlobSize();
+  }
+
+  @Override
+  public long getVersion() {
+    return connectedBlob.version;
+  }
+
+  @Override
   public int read(final byte[] b, final int off, final int len) {
     if (b == null) {
       throw new NullPointerException();
@@ -115,7 +125,7 @@ public class JdbcBlobReader implements BlobReader {
       throw new IndexOutOfBoundsException();
     }
 
-    int readByteNum = connectedBlob.blobChannel.read(position, b, off, len);
+    int readByteNum = connectedBlob.blobChannel.read(position, b, off, validLen);
     position += readByteNum;
     return readByteNum;
 
@@ -130,21 +140,6 @@ public class JdbcBlobReader implements BlobReader {
       throw new IndexOutOfBoundsException("Position is higher than the size of the blob");
     }
     this.position = pos;
-  }
-
-  @Override
-  public long getSize() {
-    try {
-      return connectedBlob.blobChannel.getBlob().length();
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public long getVersion() {
-    return connectedBlob.version;
   }
 
 }

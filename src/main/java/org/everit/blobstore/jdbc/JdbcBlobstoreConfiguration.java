@@ -58,5 +58,5 @@ public class JdbcBlobstoreConfiguration {
   /**
    * Whether calling update SQL after manipulating the Blob instance is necessary or not.
    */
-  public Boolean updateSQLForModifiedBlobContentNecessary;
+  public Boolean locatorUpdatesCopy;
 }
