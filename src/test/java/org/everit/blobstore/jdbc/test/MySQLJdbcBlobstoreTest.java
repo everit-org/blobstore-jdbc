@@ -17,11 +17,21 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
+import org.junit.Assume;
+import org.junit.BeforeClass;
+
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 
 public class MySQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+
+  @BeforeClass
+  public static void beforeClass() {
+    Assume.assumeTrue("Testing MySQLServer is skipped. If you want to test MySQL"
+        + " , define -Dmysql.enabled=true",
+        Boolean.valueOf(System.getProperty("mysql.enabled")));
+  }
 
   @Override
   protected SQLTemplates getSQLTemplates() {

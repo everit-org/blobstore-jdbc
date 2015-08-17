@@ -19,6 +19,8 @@ import javax.sql.XADataSource;
 
 import org.apache.commons.dbcp2.managed.BasicManagedDataSource;
 import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -28,6 +30,13 @@ import com.querydsl.sql.SQLTemplates;
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 
 public class JtdsJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+
+  @BeforeClass
+  public static void beforeClass() {
+    Assume.assumeTrue("Testing SQLServer with JTDS is skipped. If you want to test SQLServer"
+        + " with JTDS, define -Dsqlserver.jtds.enabled=true",
+        Boolean.valueOf(System.getProperty("sqlserver.jtds.enabled")));
+  }
 
   @Override
   protected BasicManagedDataSource createManagedDataSource(

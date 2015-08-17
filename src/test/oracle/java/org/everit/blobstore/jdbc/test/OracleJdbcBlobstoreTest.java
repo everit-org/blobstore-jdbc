@@ -19,12 +19,22 @@ import java.sql.SQLException;
 
 import javax.sql.XADataSource;
 
+import org.junit.Assume;
+import org.junit.BeforeClass;
+
 import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.SQLTemplates;
 
 import oracle.jdbc.xa.client.OracleXADataSource;
 
 public class OracleJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+
+  @BeforeClass
+  public static void beforeClass() {
+    Assume.assumeTrue("Testing Oracle Server is skipped. If you want to test Oracle"
+        + " , define -Doracle.enabled=true",
+        Boolean.valueOf(System.getProperty("oracle.enabled")));
+  }
 
   @Override
   protected SQLTemplates getSQLTemplates() {

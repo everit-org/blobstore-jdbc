@@ -17,12 +17,21 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.postgresql.xa.PGXADataSource;
 
 import com.querydsl.sql.PostgreSQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 
 public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+
+  @BeforeClass
+  public static void beforeClass() {
+    Assume.assumeTrue("Testing PostgreSQL Server is skipped. If you want to test PostgreSQL"
+        + " , define -Dpostgresql.enabled=true",
+        Boolean.valueOf(System.getProperty("postgresql.enabled")));
+  }
 
   @Override
   protected SQLTemplates getSQLTemplates() {

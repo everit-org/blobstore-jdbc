@@ -17,46 +17,38 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
-import org.apache.derby.jdbc.EmbeddedXADataSource;
-import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.querydsl.sql.DerbyTemplates;
+import com.microsoft.sqlserver.jdbc.SQLServerXADataSource;
+import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.SQLTemplates;
 
-public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
-
-  private static EmbeddedXADataSource embeddedXADataSource;
-
-  @AfterClass
-  public static void afterClass() {
-    embeddedXADataSource.setShutdownDatabase("shutdown");
-    embeddedXADataSource = null;
-  }
+public class SQLServerJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @BeforeClass
   public static void beforeClass() {
-    System.setProperty("derby.stream.error.file", "");
-
-    embeddedXADataSource = new EmbeddedXADataSource();
-    embeddedXADataSource.setCreateDatabase("create");
-
-    embeddedXADataSource.setDatabaseName("memory:testDB");
-    embeddedXADataSource.setConnectionAttributes("create=true");
-    embeddedXADataSource.setUser("");
-    embeddedXADataSource.setPassword("");
+    Assume.assumeTrue("Testing SQLServer with proprietary driver is skipped. If you want to test"
+        + " SQLServer with proprietary driver, define -Dsqlserver.proprietary.enabled=true",
+        Boolean.valueOf(System.getProperty("sqlserver.proprietary.enabled")));
   }
 
   @Override
   protected SQLTemplates getSQLTemplates() {
-    return new DerbyTemplates(true);
+    return new OracleTemplates(true);
   }
 
   @Override
   protected XADataSource getXADataSource() {
-    return embeddedXADataSource;
+    SQLServerXADataSource sqlServerXADataSource;
+    sqlServerXADataSource = new SQLServerXADataSource();
+    sqlServerXADataSource.setURL("jdbc:sqlserver://localhost");
+    sqlServerXADataSource.setDatabaseName("test");
+    sqlServerXADataSource.setUser("test");
+    sqlServerXADataSource.setPassword("test");
+    return sqlServerXADataSource;
   }
 
   @Test
@@ -64,13 +56,6 @@ public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Override
   public void testParallelBlobManipulationWithTwoTransactions() {
     super.testParallelBlobManipulationWithTwoTransactions();
-  }
-
-  @Override
-  @Test
-  @Ignore
-  public void testVersionIsUpgradedDuringUpdate() {
-    super.testVersionIsUpgradedDuringUpdate();
   }
 
 }

@@ -41,8 +41,6 @@ import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.UnmodifiableIterator;
-import com.querydsl.core.QueryFlag;
-import com.querydsl.core.QueryFlag.Position;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -54,7 +52,6 @@ import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.PostgreSQLTemplates;
 import com.querydsl.sql.SQLBindings;
 import com.querydsl.sql.SQLExpressions;
-import com.querydsl.sql.SQLOps;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.SQLServerTemplates;
 import com.querydsl.sql.SQLTemplates;
@@ -80,14 +77,30 @@ public class JdbcBlobstore implements Blobstore {
 
   protected final boolean locatorUpdatesCopy;
 
-  protected final QueryFlag pessimisticLockQueryFlag;
-
   protected final Configuration querydslConfiguration;
 
+  /**
+   * Constructor that is the same as calling
+   * {@link #JdbcBlobstore(DataSource, JdbcBlobstoreConfiguration)} with <code>null</code> as the
+   * configuration.
+   *
+   * @param dataSource
+   *          The datasource that will be used to store and read blobs.
+   */
   public JdbcBlobstore(final DataSource dataSource) {
     this(dataSource, null);
   }
 
+  /**
+   * Constructor.
+   *
+   * @param dataSource
+   *          The datasource that will be used to store and read blobs.
+   * @param configuration
+   *          The configuration how the blobs should be written and read. Different database engines
+   *          need different settings. If <code>null</code> the configuration is guessed
+   *          automatically.
+   */
   public JdbcBlobstore(final DataSource dataSource,
       final JdbcBlobstoreConfiguration configuration) {
     if (dataSource == null) {
@@ -96,7 +109,6 @@ public class JdbcBlobstore implements Blobstore {
     this.dataSource = dataSource;
     this.querydslConfiguration = resolveQuerydslConfiguration(configuration);
     this.emptyBlobExpression = resolveEmptyBlobExpression(configuration);
-    this.pessimisticLockQueryFlag = resolvePessimistickLockQueryFlag(configuration);
     this.locatorUpdatesCopy = resolveLocatorUpdatesCopy(
         configuration);
     this.blobSelectionExpression = resolveBlobSelectionExpression(configuration);
@@ -121,7 +133,6 @@ public class JdbcBlobstore implements Blobstore {
     if (e instanceof Error) {
       throw (Error) e;
     } else if (e instanceof RuntimeException) {
-      // TODO
       throw (RuntimeException) e;
     }
   }
@@ -149,7 +160,7 @@ public class JdbcBlobstore implements Blobstore {
           .from(qBlob)
           .where(qBlob.blobId.eq(blobId));
       if (forUpdate) {
-        query.addFlag(pessimisticLockQueryFlag);
+        query.forUpdate();
       }
       SQLBindings sqlBindings = query.getSQL();
 
@@ -383,21 +394,6 @@ public class JdbcBlobstore implements Blobstore {
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
-    }
-  }
-
-  protected QueryFlag resolvePessimistickLockQueryFlag(
-      final JdbcBlobstoreConfiguration configuration) {
-
-    if (configuration != null && configuration.pessimisticLockQueryFlag != null) {
-      return configuration.pessimisticLockQueryFlag;
-    }
-
-    DatabaseTypeEnum databaseType = guessDatabaseType();
-    if (databaseType == DatabaseTypeEnum.SQLSERVER) {
-      return new QueryFlag(Position.BEFORE_FILTERS, "\nwith (updlock)");
-    } else {
-      return SQLOps.FOR_UPDATE_FLAG;
     }
   }
 

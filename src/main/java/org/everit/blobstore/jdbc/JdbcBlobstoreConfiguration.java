@@ -17,7 +17,6 @@ package org.everit.blobstore.jdbc;
 
 import java.sql.Blob;
 
-import com.querydsl.core.QueryFlag;
 import com.querydsl.core.types.Expression;
 import com.querydsl.sql.Configuration;
 
@@ -45,18 +44,13 @@ public class JdbcBlobstoreConfiguration {
   public Expression<Blob> emptyBlobExpression;
 
   /**
-   * Query flag that adds pessimistic locking logic.
+   * Whether calling update SQL after manipulating the Blob instance is necessary or not.
    */
-  public QueryFlag pessimisticLockQueryFlag;
+  public Boolean locatorUpdatesCopy;
 
   /**
    * Configuration of queryDsl to construct the SQL queries. If null, it is guessed based on the
    * metadata of the database connection.
    */
   public Configuration querydslConfiguration;
-
-  /**
-   * Whether calling update SQL after manipulating the Blob instance is necessary or not.
-   */
-  public Boolean locatorUpdatesCopy;
 }
