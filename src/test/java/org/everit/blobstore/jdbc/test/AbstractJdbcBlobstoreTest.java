@@ -30,10 +30,10 @@ import org.everit.blobstore.jdbc.JdbcBlobstore;
 import org.everit.blobstore.mem.MemBlobstore;
 import org.everit.blobstore.testbase.AbstractBlobstoreTest;
 import org.everit.blobstore.testbase.BlobstoreStressAndConsistencyTester;
-import org.everit.osgi.transaction.helper.api.TransactionHelper;
-import org.everit.osgi.transaction.helper.internal.TransactionHelperImpl;
+import org.everit.osgi.transaction.helper.internal.JTATransactionPropagator;
 import org.everit.transaction.map.managed.ManagedMap;
 import org.everit.transaction.map.readcommited.ReadCommitedTransactionalMap;
+import org.everit.transaction.propagator.TransactionPropagator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +52,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
   protected BasicManagedDataSource managedDataSource;
 
-  protected TransactionHelperImpl transactionHelper;
+  protected TransactionPropagator transactionPropagator;
 
   protected GeronimoTransactionManager transactionManager;
 
@@ -100,8 +100,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
     blobstore = new JdbcBlobstore(managedDataSource);
 
-    transactionHelper = new TransactionHelperImpl();
-    transactionHelper.setTransactionManager(transactionManager);
+    transactionPropagator = new JTATransactionPropagator(transactionManager);
 
   }
 
@@ -121,8 +120,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   protected abstract SQLTemplates getSQLTemplates();
 
   @Override
-  protected TransactionHelper getTransactionHelper() {
-    return transactionHelper;
+  protected TransactionPropagator getTransactionPropagator() {
+    return transactionPropagator;
   }
 
   protected abstract XADataSource getXADataSource();
@@ -134,8 +133,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
         new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
 
-    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionHelper,
-        getBlobStore(), memBlobstore);
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
+        memBlobstore, getBlobStore());
   }
 
   @Test
@@ -149,7 +148,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.updateActionChancePart = 0;
     testConfiguration.deleteActionChancePart = 0;
 
-    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionHelper,
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
         getBlobStore());
   }
 
@@ -169,7 +168,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
         new ManagedMap<>(new ReadCommitedTransactionalMap<>(new HashMap<>()), transactionManager),
         1024, transactionManager);
 
-    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionHelper,
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
         cachedBlobstore);
   }
 

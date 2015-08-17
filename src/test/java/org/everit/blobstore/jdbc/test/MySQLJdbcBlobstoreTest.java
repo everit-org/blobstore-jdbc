@@ -31,7 +31,7 @@ public class MySQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Override
   protected XADataSource getXADataSource() {
     MysqlXADataSource xaDataSource = new MysqlXADataSource();
-    xaDataSource.setUrl("jdbc:mysql://localhost/blobstore?=blobSendChunkSize=1000000");
+    xaDataSource.setUrl("jdbc:mysql://localhost/blobstore?blobSendChunkSize=1000000");
     // xaDataSource.setServerName("localhost");
     xaDataSource.setUser("test");
     xaDataSource.setPassword("test");

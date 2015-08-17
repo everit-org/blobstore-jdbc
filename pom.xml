@@ -140,7 +140,7 @@
     <dependency>
       <groupId>org.everit.blobstore</groupId>
       <artifactId>org.everit.blobstore.testbase</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -161,7 +161,7 @@
     <dependency>
       <groupId>org.everit.blobstore</groupId>
       <artifactId>org.everit.blobstore.mem</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -223,6 +223,12 @@
       <groupId>com.oracle</groupId>
       <artifactId>ojdbc7</artifactId>
       <version>12.1.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.everit.transaction</groupId>
+      <artifactId>org.everit.transaction.propagator.jta</artifactId>
+      <version>1.0.0</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
