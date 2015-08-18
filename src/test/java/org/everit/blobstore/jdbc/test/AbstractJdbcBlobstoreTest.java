@@ -221,7 +221,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.updateActionChancePart = 5;
     testConfiguration.deleteActionChancePart = 5;
     testConfiguration.readActionChancePart = 85;
-    testConfiguration.iterationNumPerThread = 2000;
+    testConfiguration.iterationNumPerThread = 1000;
 
     BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
         getBlobStore());
@@ -241,7 +241,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.updateActionChancePart = 5;
     testConfiguration.deleteActionChancePart = 5;
     testConfiguration.readActionChancePart = 85;
-    testConfiguration.iterationNumPerThread = 2000;
+    testConfiguration.iterationNumPerThread = 1000;
 
     CachedBlobstore cachedBlobstore = new CachedBlobstore(getBlobStore(),
         new ManagedMap<>(new ReadCommitedTransactionalMap<>(new HashMap<>()), transactionManager),
