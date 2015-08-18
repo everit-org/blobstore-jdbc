@@ -18,4 +18,4 @@ before_script:
   - psql -c 'SHOW config_file;' -U postgres
   - psql -c 'create database blobstore_jdbc;' -U postgres
   - mysql -e 'create database blobstore_jdbc;'
-script: mvn bundle:install -Dpostgresql.enabled=true -Dpostgresql.user=postgres -Dpostgresql.password= -Dmysql.database=blobstore_jdbc -Dmysql.user=travis -Dmysql.password= 
+script: mvn bundle:install -Dpostgresql.enabled=true -Dpostgresql.user=postgres -Dpostgresql.password= -Dmysql.enabled=true -Dmysql.database=blobstore_jdbc -Dmysql.user=travis -Dmysql.password= 
