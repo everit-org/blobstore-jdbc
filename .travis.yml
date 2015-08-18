@@ -1,13 +1,12 @@
-before_install:
-  - psql --version
-  - sudo /etc/init.d/postgresql stop
-  - sudo echo "max_prepared_transactions = 100" >> /etc/postgresql/$PGVERSION/main/postgresql.conf
-  - sudo /etc/init.d/postgresql restart
 language: java
 jdk:
   - oraclejdk8
 addons:
   postgresql: "9.4"
+before_install:
+  - sudo /etc/init.d/postgresql stop
+  - sudo echo "max_prepared_transactions = 100" >> /etc/postgresql/9.4/main/postgresql.conf
+  - sudo /etc/init.d/postgresql restart
 before_script:
   - psql -c 'create database blobstore_jdbc;' -U postgres
   - mysql -e 'create database blobstore_jdbc;'
