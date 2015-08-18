@@ -3,12 +3,14 @@ jdk:
   - oraclejdk8
 addons:
   postgresql: "9.4"
-before_script:
+before_install:
   - sudo /etc/init.d/postgresql stop
   - sudo chmod a+rw /etc/postgresql/9.4/main/postgresql.conf
-  - sudo echo "max_prepared_transactions = 100" >> /etc/postgresql/9.4/main/postgresql.conf
+  - sudo echo "max_prepared_transactions = 100\n" >> /etc/postgresql/9.4/main/postgresql.conf
   - sudo cat /etc/postgresql/9.4/main/postgresql.conf
   - sudo /etc/init.d/postgresql restart
+before_script:
+  - psql -c 'SHOW config_file;' -U postgres
   - psql -c 'create database blobstore_jdbc;' -U postgres
   - mysql -e 'create database blobstore_jdbc;'
 script: mvn bundle:install -Dpostgresql.enabled=true -Dpostgresql.user=postgres -Dpostgresql.password= -Dmysql.database=blobstore_jdbc -Dmysql.user=travis -Dmysql.password= 
