@@ -17,6 +17,7 @@ package org.everit.blobstore.jdbc;
 
 import java.sql.Blob;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,6 +42,8 @@ import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.UnmodifiableIterator;
+import com.querydsl.core.QueryFlag;
+import com.querydsl.core.QueryFlag.Position;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.Expressions;
@@ -75,9 +78,11 @@ public class JdbcBlobstore implements Blobstore {
 
   private DatabaseTypeEnum guessedDatabaseType;
 
+  protected final QueryFlag lockBlobForShareQueryFlag;
+
   protected final Configuration querydslConfiguration;
 
-  protected final boolean updateSQLAfterBlobContentManipulationNecessary;
+  protected final boolean updateSQLAfterBlobContentManipulation;
 
   /**
    * Constructor that is the same as calling
@@ -109,11 +114,12 @@ public class JdbcBlobstore implements Blobstore {
     this.dataSource = dataSource;
     this.querydslConfiguration = resolveQuerydslConfiguration(configuration);
     this.emptyBlobExpression = resolveEmptyBlobExpression(configuration);
-    this.updateSQLAfterBlobContentManipulationNecessary =
+    this.updateSQLAfterBlobContentManipulation =
         resolveUpdateSQLAfterBlobContentManipulationNecessary(
             configuration);
     this.blobSelectionExpression = resolveBlobSelectionExpression(configuration);
     this.blobAccessMode = resolveBlobAccessMode(configuration);
+    this.lockBlobForShareQueryFlag = resolveLockBlobForShareQueryFlag(configuration);
   }
 
   /**
@@ -175,6 +181,8 @@ public class JdbcBlobstore implements Blobstore {
           .where(qBlob.blobId.eq(blobId));
       if (forUpdate) {
         query.forUpdate();
+      } else if (lockBlobForShareQueryFlag != null) {
+        query.addFlag(lockBlobForShareQueryFlag);
       }
       SQLBindings sqlBindings = query.getSQL();
 
@@ -424,12 +432,40 @@ public class JdbcBlobstore implements Blobstore {
     }
   }
 
-  private BlobAccessMode resolveMySqlBlobAccessModeFromDatabaseMetadata() {
+  /**
+   * Resolves the for share {@link QueryFlag} from the configuration or if it is not available
+   * there, based on the database type. The flag is necesary for PostgreSQL.
+   *
+   * @param configuration
+   *          The configuration that was passed to the blobstore.
+   * @return The {@link QueryFlag} or <code>null</code> if no {@link QueryFlag} should be applied.
+   */
+  protected QueryFlag resolveLockBlobForShareQueryFlag(
+      final JdbcBlobstoreConfiguration configuration) {
+
+    if (configuration != null && configuration.lockBlobForShareQueryFlag != null) {
+      return configuration.lockBlobForShareQueryFlag;
+    }
+
+    if (guessDatabaseType() == DatabaseTypeEnum.POSTGRESQL) {
+      return new QueryFlag(Position.END, "\nfor share");
+    }
+    return null;
+  }
+
+  /**
+   * Resolves the {@link BlobAccessMode} that should be used for MySQL database.
+   *
+   * @return {@link BlobAccessMode#STREAM} if {@link DatabaseMetaData#locatorsUpdateCopy()},
+   *         otherwise {@link BlobAccessMode#BYTES}.
+   */
+  protected BlobAccessMode resolveMySqlBlobAccessModeFromDatabaseMetadata() {
     BlobAccessMode result;
     boolean locatorsUpdateCopy;
 
     try (Connection connection = dataSource.getConnection()) {
-      locatorsUpdateCopy = connection.getMetaData().locatorsUpdateCopy();
+      DatabaseMetaData databaseMetaData = connection.getMetaData();
+      locatorsUpdateCopy = databaseMetaData.locatorsUpdateCopy();
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
@@ -503,8 +539,8 @@ public class JdbcBlobstore implements Blobstore {
       final JdbcBlobstoreConfiguration configuration) {
 
     if (configuration != null
-        && configuration.updateSQLAfterBlobContentManipulationNecessary != null) {
-      return configuration.updateSQLAfterBlobContentManipulationNecessary;
+        && configuration.updateSQLAfterBlobContentManipulation != null) {
+      return configuration.updateSQLAfterBlobContentManipulation;
     }
 
     DatabaseTypeEnum databaseType = guessDatabaseType();
@@ -539,7 +575,7 @@ public class JdbcBlobstore implements Blobstore {
       final boolean incrementVersion) {
     ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
     return new JdbcBlobAccessor(connectedBlob, connection, querydslConfiguration,
-        updateSQLAfterBlobContentManipulationNecessary, incrementVersion);
+        updateSQLAfterBlobContentManipulation, incrementVersion);
   }
 
 }

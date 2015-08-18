@@ -17,6 +17,7 @@ package org.everit.blobstore.jdbc;
 
 import java.sql.Blob;
 
+import com.querydsl.core.QueryFlag;
 import com.querydsl.core.types.Expression;
 import com.querydsl.sql.Configuration;
 
@@ -44,13 +45,20 @@ public class JdbcBlobstoreConfiguration {
   public Expression<Blob> emptyBlobExpression;
 
   /**
-   * Whether calling update SQL after manipulating the Blob instance is necessary or not.
-   */
-  public Boolean updateSQLAfterBlobContentManipulationNecessary;
-
-  /**
    * Configuration of queryDsl to construct the SQL queries. If null, it is guessed based on the
    * metadata of the database connection.
    */
   public Configuration querydslConfiguration;
+
+  /**
+   * An optional query flag that can extend blob non-for-update blob selections. This might be
+   * necessary for databases where a row-level read lock must be applied to blobs when they are
+   * selected.
+   */
+  public QueryFlag lockBlobForShareQueryFlag;
+
+  /**
+   * Whether calling update SQL after manipulating the Blob instance is necessary or not.
+   */
+  public Boolean updateSQLAfterBlobContentManipulation;
 }

@@ -17,6 +17,8 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
+import org.junit.Ignore;
+import org.junit.Test;
 import org.postgresql.xa.PGXADataSource;
 
 import com.querydsl.sql.PostgreSQLTemplates;
@@ -69,6 +71,13 @@ public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Override
   protected SQLTemplates getSQLTemplates() {
     return new PostgreSQLTemplates(true);
+  }
+
+  @Test
+  @Ignore
+  @Override
+  public void testParallelBlobManipulationWithTwoTransactions() {
+    super.testParallelBlobManipulationWithTwoTransactions();
   }
 
 }
