@@ -29,27 +29,45 @@ import com.querydsl.sql.SQLTemplates;
 public class HsqldbJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new HSQLDBTemplates(true);
-  }
-
-  @Override
-  protected XADataSource getXADataSource() {
+  protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
     JDBCXADataSource xaDataSource;
     try {
       xaDataSource = new JDBCXADataSource();
-      xaDataSource.setUrl("jdbc:hsqldb:mem:test");
+
+      String url = "jdbc:hsqldb:" + parameters.database;
+
+      xaDataSource.setUrl(url);
+
+      if (parameters.user != null) {
+        xaDataSource.setUser(parameters.user);
+      }
+
+      if (parameters.password != null) {
+        xaDataSource.setPassword(parameters.password);
+      }
+
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
     return xaDataSource;
   }
 
-  @Test
-  @Ignore
   @Override
-  public void testReadBlobDuringOngoingUpdateOnOtherThread() {
-    super.testReadBlobDuringOngoingUpdateOnOtherThread();
+  protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
+    DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
+    result.dbName = "hsqldb";
+    result.enabledByDefault = true;
+
+    DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
+    accessParameters.database = "mem:test";
+
+    result.defaultAccessParameters = accessParameters;
+    return result;
+  }
+
+  @Override
+  protected SQLTemplates getSQLTemplates() {
+    return new HSQLDBTemplates(true);
   }
 
   @Test
@@ -57,5 +75,12 @@ public class HsqldbJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Override
   public void testParallelBlobManipulationWithTwoTransactions() {
     super.testParallelBlobManipulationWithTwoTransactions();
+  }
+
+  @Test
+  @Ignore
+  @Override
+  public void testReadBlobDuringOngoingUpdateOnOtherThread() {
+    super.testReadBlobDuringOngoingUpdateOnOtherThread();
   }
 }

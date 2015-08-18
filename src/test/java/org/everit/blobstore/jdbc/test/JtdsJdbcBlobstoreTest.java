@@ -19,8 +19,6 @@ import javax.sql.XADataSource;
 
 import org.apache.commons.dbcp2.managed.BasicManagedDataSource;
 import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
-import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -30,13 +28,6 @@ import com.querydsl.sql.SQLTemplates;
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 
 public class JtdsJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
-
-  @BeforeClass
-  public static void beforeClass() {
-    Assume.assumeTrue("Testing SQLServer with JTDS is skipped. If you want to test SQLServer"
-        + " with JTDS, define -Dsqlserver.jtds.enabled=true",
-        Boolean.valueOf(System.getProperty("sqlserver.jtds.enabled")));
-  }
 
   @Override
   protected BasicManagedDataSource createManagedDataSource(
@@ -49,18 +40,46 @@ public class JtdsJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   }
 
   @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new SQLServer2012Templates(true);
+  protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
+    JtdsDataSource jtdsDataSource = new JtdsDataSource();
+    jtdsDataSource.setServerName(parameters.host);
+
+    if (parameters.port != null) {
+      jtdsDataSource.setPortNumber(parameters.port);
+    }
+
+    jtdsDataSource.setDatabaseName(parameters.database);
+
+    if (parameters.user != null) {
+      jtdsDataSource.setUser(parameters.user);
+    }
+
+    if (parameters.password != null) {
+      jtdsDataSource.setPassword(parameters.password);
+    }
+
+    return jtdsDataSource;
   }
 
   @Override
-  protected XADataSource getXADataSource() {
-    JtdsDataSource jtdsDataSource = new JtdsDataSource();
-    jtdsDataSource.setServerName("localhost");
-    jtdsDataSource.setDatabaseName("test");
-    jtdsDataSource.setUser("test");
-    jtdsDataSource.setPassword("test");
-    return jtdsDataSource;
+  protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
+    DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
+    result.dbName = "sqlserver.jtds";
+    result.enabledByDefault = false;
+
+    DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
+    accessParameters.host = "localhost";
+    accessParameters.database = "test";
+    accessParameters.user = "test";
+    accessParameters.password = "test";
+
+    result.defaultAccessParameters = accessParameters;
+    return result;
+  }
+
+  @Override
+  protected SQLTemplates getSQLTemplates() {
+    return new SQLServer2012Templates(true);
   }
 
   @Test

@@ -46,7 +46,7 @@ public class JdbcBlobstoreConfiguration {
   /**
    * Whether calling update SQL after manipulating the Blob instance is necessary or not.
    */
-  public Boolean locatorUpdatesCopy;
+  public Boolean updateSQLAfterBlobContentManipulationNecessary;
 
   /**
    * Configuration of queryDsl to construct the SQL queries. If null, it is guessed based on the

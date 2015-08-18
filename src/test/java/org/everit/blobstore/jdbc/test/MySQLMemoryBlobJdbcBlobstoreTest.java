@@ -17,33 +17,27 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.microsoft.sqlserver.jdbc.SQLServerXADataSource;
-import com.querydsl.sql.OracleTemplates;
+import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 
-public class SQLServerJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+public class MySQLMemoryBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
   protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
-    SQLServerXADataSource xaDataSource = new SQLServerXADataSource();
-
-    String url = "jdbc:sqlserver://" + parameters.host;
+    MysqlXADataSource xaDataSource = new MysqlXADataSource();
+    String url = "jdbc:mysql://" + parameters.host;
     if (parameters.port != null) {
       url += ":" + parameters.port;
     }
+
+    url += "/" + parameters.database;
 
     if (parameters.connectionAttributes != null) {
       url += "?" + parameters.connectionAttributes;
     }
 
-    xaDataSource.setURL(url);
-
-    if (parameters.database != null) {
-      xaDataSource.setDatabaseName(parameters.database);
-    }
+    xaDataSource.setUrl(url);
 
     if (parameters.user != null) {
       xaDataSource.setUser(parameters.user);
@@ -58,12 +52,12 @@ public class SQLServerJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   @Override
   protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
     DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
-    result.dbName = "sqlserver";
+    result.dbName = "mysql";
     result.enabledByDefault = false;
 
     DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
     accessParameters.host = "localhost";
-    accessParameters.database = "test";
+    accessParameters.database = "blobstore";
     accessParameters.user = "test";
     accessParameters.password = "test";
 
@@ -73,14 +67,7 @@ public class SQLServerJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
   protected SQLTemplates getSQLTemplates() {
-    return new OracleTemplates(true);
-  }
-
-  @Test
-  @Ignore
-  @Override
-  public void testParallelBlobManipulationWithTwoTransactions() {
-    super.testParallelBlobManipulationWithTwoTransactions();
+    return new MySQLTemplates(true);
   }
 
 }

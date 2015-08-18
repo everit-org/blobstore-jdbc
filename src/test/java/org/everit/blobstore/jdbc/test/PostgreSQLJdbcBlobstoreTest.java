@@ -17,8 +17,6 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
-import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.postgresql.xa.PGXADataSource;
 
 import com.querydsl.sql.PostgreSQLTemplates;
@@ -26,27 +24,51 @@ import com.querydsl.sql.SQLTemplates;
 
 public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
-  @BeforeClass
-  public static void beforeClass() {
-    Assume.assumeTrue("Testing PostgreSQL Server is skipped. If you want to test PostgreSQL"
-        + " , define -Dpostgresql.enabled=true",
-        Boolean.valueOf(System.getProperty("postgresql.enabled")));
+  @Override
+  protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
+    PGXADataSource xaDataSource = new PGXADataSource();
+
+    if (parameters.host != null) {
+      xaDataSource.setServerName(parameters.host);
+    }
+
+    if (parameters.port != null) {
+      xaDataSource.setPortNumber(parameters.port);
+    }
+
+    if (parameters.database != null) {
+      xaDataSource.setDatabaseName(parameters.database);
+    }
+
+    if (parameters.user != null) {
+      xaDataSource.setUser(parameters.user);
+    }
+
+    if (parameters.password != null) {
+      xaDataSource.setPassword(parameters.password);
+    }
+    return xaDataSource;
+  }
+
+  @Override
+  protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
+    DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
+    result.dbName = "postgresql";
+    result.enabledByDefault = false;
+
+    DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
+    accessParameters.host = "localhost";
+    accessParameters.database = "blobstore_jdbc";
+    accessParameters.user = "test";
+    accessParameters.password = "test";
+
+    result.defaultAccessParameters = accessParameters;
+    return result;
   }
 
   @Override
   protected SQLTemplates getSQLTemplates() {
     return new PostgreSQLTemplates(true);
-  }
-
-  @Override
-  protected XADataSource getXADataSource() {
-    PGXADataSource xaDataSource = new PGXADataSource();
-    xaDataSource.setServerName("localhost");
-    xaDataSource.setPortNumber(5433);
-    xaDataSource.setUser("test");
-    xaDataSource.setPassword("test");
-    xaDataSource.setDatabaseName("blobstore_jdbc");
-    return xaDataSource;
   }
 
 }

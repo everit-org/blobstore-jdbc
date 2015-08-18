@@ -19,9 +19,6 @@ import java.sql.SQLException;
 
 import javax.sql.XADataSource;
 
-import org.junit.Assume;
-import org.junit.BeforeClass;
-
 import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.SQLTemplates;
 
@@ -29,30 +26,57 @@ import oracle.jdbc.xa.client.OracleXADataSource;
 
 public class OracleJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
-  @BeforeClass
-  public static void beforeClass() {
-    Assume.assumeTrue("Testing Oracle Server is skipped. If you want to test Oracle"
-        + " , define -Doracle.enabled=true",
-        Boolean.valueOf(System.getProperty("oracle.enabled")));
+  @Override
+  protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
+    OracleXADataSource xaDataSource;
+    try {
+      xaDataSource = new OracleXADataSource();
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
+    String url = "jdbc:oracle:thin:@" + parameters.host;
+    if (parameters.port != null) {
+      url += ":" + parameters.port;
+    }
+
+    url += ":" + parameters.database;
+
+    if (parameters.connectionAttributes != null) {
+      url += "?" + parameters.connectionAttributes;
+    }
+
+    xaDataSource.setURL(url);
+
+    if (parameters.user != null) {
+      xaDataSource.setUser(parameters.user);
+    }
+
+    if (parameters.password != null) {
+      xaDataSource.setPassword(parameters.password);
+    }
+    return xaDataSource;
+  }
+
+  @Override
+  protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
+    DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
+    result.dbName = "oracle";
+    result.enabledByDefault = false;
+
+    DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
+    accessParameters.host = "localhost";
+    accessParameters.port = 1521;
+    accessParameters.database = "orcl";
+    accessParameters.user = "c##test";
+    accessParameters.password = "test";
+
+    result.defaultAccessParameters = accessParameters;
+    return result;
   }
 
   @Override
   protected SQLTemplates getSQLTemplates() {
     return new OracleTemplates(true);
-  }
-
-  @Override
-  protected XADataSource getXADataSource() {
-    OracleXADataSource oracleXADataSource;
-    try {
-      oracleXADataSource = new OracleXADataSource();
-    } catch (SQLException e) {
-      throw new RuntimeException(e);
-    }
-    oracleXADataSource.setURL("jdbc:oracle:thin:@localhost:1521/orcl");
-    oracleXADataSource.setUser("c##test");
-    oracleXADataSource.setPassword("test");
-    // TODO Auto-generated method stub
-    return oracleXADataSource;
   }
 }

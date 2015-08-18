@@ -35,6 +35,7 @@ import org.everit.transaction.map.readcommited.ReadCommitedTransactionalMap;
 import org.everit.transaction.propagator.TransactionPropagator;
 import org.everit.transaction.propagator.jta.JTATransactionPropagator;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,17 +49,34 @@ import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 
 public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
+  private static String nullOrNonEmptyString(final String text) {
+    if (text == null) {
+      return null;
+    }
+
+    if ("".equals(text.trim())) {
+      return null;
+    }
+
+    return text;
+  }
+
   protected JdbcBlobstore blobstore;
 
   protected BasicManagedDataSource managedDataSource;
 
-  protected TransactionPropagator transactionPropagator;
+  private boolean skipped = false;
 
   protected GeronimoTransactionManager transactionManager;
+
+  protected TransactionPropagator transactionPropagator;
 
   @Override
   @After
   public void after() {
+    if (skipped) {
+      return;
+    }
     super.after();
     if (managedDataSource != null) {
       try {
@@ -71,13 +89,19 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
   @Before
   public void before() {
+    DatabaseAccessParametersDTO databaseAccessParameters = resolveDatabaseAccessParameters();
+
+    skipped = databaseAccessParameters == null;
+    Assume.assumeFalse("Tests are not enabled for database " + getDatabaseTestAttributes().dbName,
+        skipped);
+
     try {
       transactionManager = new GeronimoTransactionManager(6000);
     } catch (XAException e) {
       throw new RuntimeException(e);
     }
 
-    XADataSource xaDataSource = getXADataSource();
+    XADataSource xaDataSource = createXADataSource(databaseAccessParameters);
 
     managedDataSource = createManagedDataSource(transactionManager, xaDataSource);
 
@@ -112,10 +136,14 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     return lManagedDataSource;
   }
 
+  protected abstract XADataSource createXADataSource(DatabaseAccessParametersDTO parameters);
+
   @Override
   protected Blobstore getBlobStore() {
     return blobstore;
   }
+
+  protected abstract DatabaseTestAttributesDTO getDatabaseTestAttributes();
 
   protected abstract SQLTemplates getSQLTemplates();
 
@@ -124,7 +152,48 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     return transactionPropagator;
   }
 
-  protected abstract XADataSource getXADataSource();
+  protected DatabaseAccessParametersDTO resolveDatabaseAccessParameters() {
+    DatabaseTestAttributesDTO databaseTestAttributes = getDatabaseTestAttributes();
+    String sysPropPrefix = databaseTestAttributes.dbName + ".";
+
+    boolean enabled = databaseTestAttributes.enabledByDefault;
+    String enabledSysProp = System.getProperty(sysPropPrefix + "enabled");
+    if (enabledSysProp != null) {
+      enabled = Boolean.parseBoolean(enabledSysProp);
+    }
+    if (!enabled) {
+      return null;
+    }
+
+    DatabaseAccessParametersDTO defaultAccessParameters =
+        databaseTestAttributes.defaultAccessParameters;
+    DatabaseAccessParametersDTO result = new DatabaseAccessParametersDTO();
+    result.host = nullOrNonEmptyString(
+        System.getProperty(sysPropPrefix + "host", defaultAccessParameters.host));
+
+    String portString = nullOrNonEmptyString(System.getProperty(sysPropPrefix + "port"));
+
+    if (portString == null) {
+      result.port = defaultAccessParameters.port;
+    } else {
+      result.port = Integer.parseInt(portString);
+    }
+
+    result.database = nullOrNonEmptyString(
+        System.getProperty(sysPropPrefix + "database", defaultAccessParameters.database));
+
+    result.password = nullOrNonEmptyString(
+        System.getProperty(sysPropPrefix + "password", defaultAccessParameters.password));
+
+    result.user = nullOrNonEmptyString(
+        System.getProperty(sysPropPrefix + "user", defaultAccessParameters.user));
+
+    result.connectionAttributes =
+        nullOrNonEmptyString(System.getProperty(sysPropPrefix + "connectionAttributes",
+            defaultAccessParameters.connectionAttributes));
+
+    return result;
+  }
 
   @Test
   public void testConsistency() {

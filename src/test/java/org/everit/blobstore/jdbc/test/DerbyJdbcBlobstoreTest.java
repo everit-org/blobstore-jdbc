@@ -18,7 +18,6 @@ package org.everit.blobstore.jdbc.test;
 import javax.sql.XADataSource;
 
 import org.apache.derby.jdbc.EmbeddedXADataSource;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,35 +27,49 @@ import com.querydsl.sql.SQLTemplates;
 
 public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
-  private static EmbeddedXADataSource embeddedXADataSource;
-
-  @AfterClass
-  public static void afterClass() {
-    embeddedXADataSource.setShutdownDatabase("shutdown");
-    embeddedXADataSource = null;
-  }
-
   @BeforeClass
   public static void beforeClass() {
     System.setProperty("derby.stream.error.file", "");
+  }
 
-    embeddedXADataSource = new EmbeddedXADataSource();
-    embeddedXADataSource.setCreateDatabase("create");
+  @Override
+  protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
+    EmbeddedXADataSource embeddedXADataSource = new EmbeddedXADataSource();
 
-    embeddedXADataSource.setDatabaseName("memory:testDB");
-    embeddedXADataSource.setConnectionAttributes("create=true");
-    embeddedXADataSource.setUser("");
-    embeddedXADataSource.setPassword("");
+    embeddedXADataSource.setDatabaseName(parameters.database);
+
+    if (parameters.connectionAttributes != null) {
+      embeddedXADataSource.setConnectionAttributes(parameters.connectionAttributes);
+    }
+
+    if (parameters.user != null) {
+      embeddedXADataSource.setUser(parameters.user);
+    }
+
+    if (parameters.password != null) {
+      embeddedXADataSource.setPassword(parameters.password);
+    }
+
+    return embeddedXADataSource;
+  }
+
+  @Override
+  protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
+    DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
+    result.dbName = "derby";
+    result.enabledByDefault = true;
+
+    DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
+    accessParameters.database = "memory:testDB";
+    accessParameters.connectionAttributes = "create=true";
+
+    result.defaultAccessParameters = accessParameters;
+    return result;
   }
 
   @Override
   protected SQLTemplates getSQLTemplates() {
     return new DerbyTemplates(true);
-  }
-
-  @Override
-  protected XADataSource getXADataSource() {
-    return embeddedXADataSource;
   }
 
   @Test

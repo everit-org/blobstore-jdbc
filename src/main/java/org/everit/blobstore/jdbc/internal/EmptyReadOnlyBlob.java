@@ -28,6 +28,16 @@ import java.sql.SQLFeatureNotSupportedException;
  */
 public class EmptyReadOnlyBlob implements Blob {
 
+  /**
+   * An input stream implementation that does not provide any data.
+   */
+  private static final class EmptyInputStream extends InputStream {
+    @Override
+    public int read() throws IOException {
+      return -1;
+    }
+  }
+
   @Override
   public void free() throws SQLException {
   }
@@ -45,13 +55,7 @@ public class EmptyReadOnlyBlob implements Blob {
     if (length < 0) {
       throw new SQLException("Length must be at least zero");
     }
-    return new InputStream() {
-
-      @Override
-      public int read() throws IOException {
-        return -1;
-      }
-    };
+    return new EmptyInputStream();
   }
 
   @Override

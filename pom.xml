@@ -278,7 +278,7 @@
       <id>sqlserver</id>
       <activation>
         <property>
-          <name>sqlserver.proprietary.enabled</name>
+          <name>sqlserver.enabled</name>
           <value>true</value>
         </property>
       </activation>

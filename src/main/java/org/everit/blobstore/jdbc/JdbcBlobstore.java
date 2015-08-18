@@ -75,9 +75,9 @@ public class JdbcBlobstore implements Blobstore {
 
   private DatabaseTypeEnum guessedDatabaseType;
 
-  protected final boolean locatorUpdatesCopy;
-
   protected final Configuration querydslConfiguration;
+
+  protected final boolean updateSQLAfterBlobContentManipulationNecessary;
 
   /**
    * Constructor that is the same as calling
@@ -109,8 +109,9 @@ public class JdbcBlobstore implements Blobstore {
     this.dataSource = dataSource;
     this.querydslConfiguration = resolveQuerydslConfiguration(configuration);
     this.emptyBlobExpression = resolveEmptyBlobExpression(configuration);
-    this.locatorUpdatesCopy = resolveLocatorUpdatesCopy(
-        configuration);
+    this.updateSQLAfterBlobContentManipulationNecessary =
+        resolveUpdateSQLAfterBlobContentManipulationNecessary(
+            configuration);
     this.blobSelectionExpression = resolveBlobSelectionExpression(configuration);
     this.blobAccessMode = resolveBlobAccessMode(configuration);
   }
@@ -134,6 +135,19 @@ public class JdbcBlobstore implements Blobstore {
       throw (Error) e;
     } else if (e instanceof RuntimeException) {
       throw (RuntimeException) e;
+    }
+  }
+
+  private void closeResultSet(final ResultSet resultSet,
+      final boolean closeResultSetIsNotNecessaryAsItWillBeClosedByStatement) {
+
+    if (closeResultSetIsNotNecessaryAsItWillBeClosedByStatement) {
+      try {
+        resultSet.close();
+      } catch (SQLException e) {
+        // TODO
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -174,13 +188,22 @@ public class JdbcBlobstore implements Blobstore {
         i++;
         preparedStatement.setObject(i, binding);
       }
-      ResultSet resultSet = preparedStatement.executeQuery();
-      if (!resultSet.next()) {
-        throw new NoSuchBlobException(blobId);
-      }
 
-      long version = resultSet.getLong("version_");
-      Blob blob = resultSet.getBlob("blob_");
+      long version;
+      Blob blob;
+
+      ResultSet resultSet = preparedStatement.executeQuery();
+      try {
+        if (!resultSet.next()) {
+          throw new NoSuchBlobException(blobId);
+        }
+
+        version = resultSet.getLong("version_");
+        blob = resultSet.getBlob("blob_");
+      } finally {
+        final boolean closeResultSetIsNotNecessaryAsItWillBeClosedByStatement = false;
+        closeResultSet(resultSet, closeResultSetIsNotNecessaryAsItWillBeClosedByStatement);
+      }
 
       BlobChannel blobChannel;
       if (blobAccessMode == BlobAccessMode.BYTES) {
@@ -199,7 +222,7 @@ public class JdbcBlobstore implements Blobstore {
 
   @Override
   public BlobAccessor createBlob() {
-    Connection connection = getNewDatabaseConnection();
+    Connection connection = createDatabaseConnection();
 
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     Long blobId;
@@ -213,6 +236,22 @@ public class JdbcBlobstore implements Blobstore {
     }
 
     return updateBlob(blobId, connection, false);
+  }
+
+  /**
+   * Creates a new database connection.
+   *
+   * @return The new database connection.
+   */
+  protected Connection createDatabaseConnection() {
+    Connection connection;
+    try {
+      connection = dataSource.getConnection();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
+    return connection;
   }
 
   @Override
@@ -229,17 +268,6 @@ public class JdbcBlobstore implements Blobstore {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
     }
-  }
-
-  protected Connection getNewDatabaseConnection() {
-    Connection connection;
-    try {
-      connection = dataSource.getConnection();
-    } catch (SQLException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
-    }
-    return connection;
   }
 
   /**
@@ -283,14 +311,14 @@ public class JdbcBlobstore implements Blobstore {
 
   @Override
   public BlobReader readBlob(final long blobId) {
-    Connection connection = getNewDatabaseConnection();
+    Connection connection = createDatabaseConnection();
     ConnectedBlob connectedBlob = connectBlob(blobId, false, connection);
     return new JdbcBlobReader(connectedBlob, connection);
   }
 
   @Override
   public BlobReader readBlobForUpdate(final long blobId) {
-    Connection connection = getNewDatabaseConnection();
+    Connection connection = createDatabaseConnection();
     ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
     return new JdbcBlobReader(connectedBlob, connection);
   }
@@ -318,7 +346,8 @@ public class JdbcBlobstore implements Blobstore {
         result = BlobAccessMode.BYTES;
         break;
       case MYSQL:
-        result = BlobAccessMode.STREAM;
+        result = resolveMySqlBlobAccessModeFromDatabaseMetadata();
+
         break;
       case ORACLE:
         result = BlobAccessMode.STREAM;
@@ -337,6 +366,16 @@ public class JdbcBlobstore implements Blobstore {
     return result;
   }
 
+  /**
+   * Resolving the selection expression of the blob based on the configuration or if it is not
+   * available in the configuration, based on the database type. This is necessary as for example if
+   * MySQL is used with remote locator mode, instead of the blob column name, a string constant has
+   * to be used that contains the column name in the SQL expression.
+   *
+   * @param configuration
+   *          The configuration passed to this blobstore.
+   * @return The selection expression of the blob.
+   */
   protected Expression<?> resolveBlobSelectionExpression(
       final JdbcBlobstoreConfiguration configuration) {
 
@@ -361,6 +400,14 @@ public class JdbcBlobstore implements Blobstore {
     }
   }
 
+  /**
+   * Resolves the expression of an empty blob based on the configuration or if it is not available
+   * in the configuration, based on the database type.
+   *
+   * @param configuration
+   *          The configuration that was passed to the blobstore.
+   * @return The expression of an empty blob that can be used in an insert statement.
+   */
   protected Expression<Blob> resolveEmptyBlobExpression(
       final JdbcBlobstoreConfiguration configuration) {
 
@@ -377,26 +424,32 @@ public class JdbcBlobstore implements Blobstore {
     }
   }
 
-  protected boolean resolveLocatorUpdatesCopy(
-      final JdbcBlobstoreConfiguration configuration) {
-
-    if (configuration != null && configuration.locatorUpdatesCopy != null) {
-      return configuration.locatorUpdatesCopy;
-    }
-
-    DatabaseTypeEnum databaseType = guessDatabaseType();
-    if (databaseType == DatabaseTypeEnum.HSQLDB) {
-      return true;
-    }
+  private BlobAccessMode resolveMySqlBlobAccessModeFromDatabaseMetadata() {
+    BlobAccessMode result;
+    boolean locatorsUpdateCopy;
 
     try (Connection connection = dataSource.getConnection()) {
-      return connection.getMetaData().locatorsUpdateCopy();
+      locatorsUpdateCopy = connection.getMetaData().locatorsUpdateCopy();
     } catch (SQLException e) {
       // TODO Auto-generated catch block
       throw new RuntimeException(e);
     }
+    if (locatorsUpdateCopy) {
+      result = BlobAccessMode.STREAM;
+    } else {
+      result = BlobAccessMode.BYTES;
+    }
+    return result;
   }
 
+  /**
+   * Resolves the Querydsl {@link Configuration} from the {@link JdbcBlobstoreConfiguration} or if
+   * it is not available there, based on the database type.
+   *
+   * @param blobstoreConfiguration
+   *          The configuration that was passed to the blobstore.
+   * @return The querydsl configuration.
+   */
   protected Configuration resolveQuerydslConfiguration(
       final JdbcBlobstoreConfiguration blobstoreConfiguration) {
     if (blobstoreConfiguration != null && blobstoreConfiguration.querydslConfiguration != null) {
@@ -438,9 +491,38 @@ public class JdbcBlobstore implements Blobstore {
 
   }
 
+  /**
+   * Resolves whether an update SQL statement is necessary after manipulating the content of a
+   * selected blob or not.
+   *
+   * @param configuration
+   *          The configuration that was passed to the blobstore.
+   * @return Whether update SQL is necessary after blob manipulation or not.
+   */
+  protected boolean resolveUpdateSQLAfterBlobContentManipulationNecessary(
+      final JdbcBlobstoreConfiguration configuration) {
+
+    if (configuration != null
+        && configuration.updateSQLAfterBlobContentManipulationNecessary != null) {
+      return configuration.updateSQLAfterBlobContentManipulationNecessary;
+    }
+
+    DatabaseTypeEnum databaseType = guessDatabaseType();
+    if (databaseType == DatabaseTypeEnum.HSQLDB) {
+      return true;
+    }
+
+    try (Connection connection = dataSource.getConnection()) {
+      return connection.getMetaData().locatorsUpdateCopy();
+    } catch (SQLException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   public BlobAccessor updateBlob(final long blobId) {
-    Connection connection = getNewDatabaseConnection();
+    Connection connection = createDatabaseConnection();
     return updateBlob(blobId, connection, true);
   }
 
@@ -457,7 +539,7 @@ public class JdbcBlobstore implements Blobstore {
       final boolean incrementVersion) {
     ConnectedBlob connectedBlob = connectBlob(blobId, true, connection);
     return new JdbcBlobAccessor(connectedBlob, connection, querydslConfiguration,
-        locatorUpdatesCopy, incrementVersion);
+        updateSQLAfterBlobContentManipulationNecessary, incrementVersion);
   }
 
 }

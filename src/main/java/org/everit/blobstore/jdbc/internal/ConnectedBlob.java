@@ -28,10 +28,22 @@ public class ConnectedBlob {
 
   public final long blobId;
 
-  protected final Statement statement;
+  public final Statement statement;
 
   public final long version;
 
+  /**
+   * Constructor.
+   *
+   * @param blobId
+   *          The id of the blob.
+   * @param blobChannel
+   *          The channel that does the actual reading and writing to the blob instance.
+   * @param version
+   *          The version of the blob.
+   * @param statement
+   *          The statement that should be closed when this connected blob is closed.
+   */
   public ConnectedBlob(final long blobId, final BlobChannel blobChannel, final long version,
       final Statement statement) {
     this.blobId = blobId;

@@ -24,6 +24,9 @@ import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 import com.querydsl.sql.Configuration;
 import com.querydsl.sql.dml.SQLUpdateClause;
 
+/**
+ * JDBC Blob type based implementation of {@link BlobAccessor}.
+ */
 public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   protected final long newVersion;
@@ -32,6 +35,21 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
 
   protected final boolean updateBlobContentInUpdateSQLNecessary;
 
+  /**
+   * Constructor.
+   *
+   * @param connectedBlob
+   *          The closeable blob that is queried from the database.
+   * @param connection
+   *          Database connection.
+   * @param querydslConfiguration
+   *          Configuration of querydsl.
+   * @param updateBlobContentInUpdateSQLNecessary
+   *          Whether updating the blob in the SQL that updates the version is necessary or not.
+   * @param incrementVersion
+   *          Whether version should be incremented or not. The version of newly created blobs do
+   *          not have to be incremented.
+   */
   public JdbcBlobAccessor(final ConnectedBlob connectedBlob, final Connection connection,
       final Configuration querydslConfiguration,
       final boolean updateBlobContentInUpdateSQLNecessary, final boolean incrementVersion) {
