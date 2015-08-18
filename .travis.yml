@@ -7,6 +7,7 @@ before_install:
   - sudo /etc/init.d/postgresql stop
   - sudo chmod a+rw /etc/postgresql/9.4/main/postgresql.conf
   - sudo echo "max_prepared_transactions = 100" >> /etc/postgresql/9.4/main/postgresql.conf
+  - sudo cat /etc/postgresql/9.4/main/postgresql.conf
   - sudo /etc/init.d/postgresql restart
 before_script:
   - psql -c 'create database blobstore_jdbc;' -U postgres
