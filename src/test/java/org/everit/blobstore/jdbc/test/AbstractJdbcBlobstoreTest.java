@@ -198,7 +198,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   @Test
   public void testConsistency() {
     System.out
-        .println("---------- Consistency Test " + this.getClass().getName() + " --------------");
+        .println(
+            "---------- Consistency Test (" + this.getClass().getSimpleName() + ") --------------");
     MemBlobstore memBlobstore = new MemBlobstore(transactionManager);
     BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
         new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
@@ -210,7 +211,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   @Test
   public void testPerformance() {
     System.out
-        .println("---------- Performance Test " + this.getClass().getName() + " --------------");
+        .println(
+            "---------- Performance Test (" + this.getClass().getSimpleName() + ") --------------");
     BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
         new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
 
@@ -228,7 +230,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   @Test
   public void testPerformanceWithCache() {
     System.out.println(
-        "---------- Performance with Cache Test " + this.getClass().getName() + " --------------");
+        "---------- Performance with Cache Test (" + this.getClass().getSimpleName()
+            + ") --------------");
 
     BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
         new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
