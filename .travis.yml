@@ -6,7 +6,13 @@ addons:
 before_install:
   - sudo /etc/init.d/postgresql stop
   - sudo chmod a+rw /etc/postgresql/9.4/main/postgresql.conf
-  - sudo printf "max_prepared_transactions = 100\n" >> /etc/postgresql/9.4/main/postgresql.conf
+  - sudo printf "max_prepared_transactions = 100\n\n" >> /etc/postgresql/9.1/main/postgresql.conf
+  - sudo chmod a+rw /etc/postgresql/9.4/main/postgresql.conf
+  - sudo printf "max_prepared_transactions = 100\n\n" >> /etc/postgresql/9.2/main/postgresql.conf
+  - sudo chmod a+rw /etc/postgresql/9.4/main/postgresql.conf
+  - sudo printf "max_prepared_transactions = 100\n\n" >> /etc/postgresql/9.3/main/postgresql.conf
+  - sudo chmod a+rw /etc/postgresql/9.4/main/postgresql.conf
+  - sudo printf "max_prepared_transactions = 100\n\n" >> /etc/postgresql/9.4/main/postgresql.conf
   - sudo cat /etc/postgresql/9.4/main/postgresql.conf
   - sudo /etc/init.d/postgresql restart
 before_script:
