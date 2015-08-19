@@ -15,6 +15,10 @@
  */
 package org.everit.blobstore.jdbc.test;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -111,6 +115,22 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
       Liquibase liquibase = new Liquibase(
           "META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml",
           new ClassLoaderResourceAccessor(), databaseConnection);
+
+      String sqlOutputFolder = System.getProperty("blobstore.sql.outputFolder");
+      if (sqlOutputFolder != null) {
+        File folder = new File(sqlOutputFolder);
+        folder.mkdirs();
+
+        File outputFile =
+            new File(folder, "blobstore-" + getDatabaseTestAttributes().dbName + ".sql");
+
+        try (FileWriter fw = new FileWriter(outputFile, true)) {
+
+          liquibase.update((Contexts) null, fw);
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      }
 
       liquibase.update((Contexts) null);
     } catch (LiquibaseException | SQLException e) {
