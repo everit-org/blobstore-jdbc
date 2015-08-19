@@ -83,8 +83,10 @@
           <instructions>
             <Import-Package>
               org.everit.blobstore;version="[1.0,1.1)",
+              com.google.common.collect;version="18.0",
               *
             </Import-Package>
+            <Export-Package>org.everit.blobstore.jdbc</Export-Package>
           </instructions>
         </configuration>
       </plugin>

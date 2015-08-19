@@ -40,8 +40,6 @@ import org.everit.blobstore.jdbc.internal.JdbcBlobReader;
 import org.everit.blobstore.jdbc.internal.StreamBlobChannel;
 import org.everit.blobstore.jdbc.schema.qdsl.QBlobstoreBlob;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.UnmodifiableIterator;
 import com.querydsl.core.QueryFlag;
 import com.querydsl.core.QueryFlag.Position;
 import com.querydsl.core.Tuple;
@@ -175,8 +173,7 @@ public class JdbcBlobstore implements Blobstore {
     try {
       SQLQuery<Tuple> query = new SQLQuery<>(connection, querydslConfiguration)
           .select(qBlob.blobId, qBlob.version_.as("version_"),
-              Expressions.as(blobSelectionExpression, "blob_")) // CS_DISABLE_LINE_LENGTH
-                                                                // qBlob.blob_.as("blob_")
+              Expressions.as(blobSelectionExpression, "blob_"))
           .from(qBlob)
           .where(qBlob.blobId.eq(blobId));
       if (forUpdate) {
@@ -188,13 +185,10 @@ public class JdbcBlobstore implements Blobstore {
 
       String sql = sqlBindings.getSQL();
       PreparedStatement preparedStatement = connection.prepareStatement(sql);
-      ImmutableList<Object> bindings = sqlBindings.getBindings();
-      int i = 0;
-      UnmodifiableIterator<Object> iterator = bindings.iterator();
-      while (iterator.hasNext()) {
-        Object binding = iterator.next();
-        i++;
-        preparedStatement.setObject(i, binding);
+      int paramIndex = 0;
+      for (Object binding : (List<Object>) sqlBindings.getBindings()) {
+        paramIndex++;
+        preparedStatement.setObject(paramIndex, binding);
       }
 
       long version;
