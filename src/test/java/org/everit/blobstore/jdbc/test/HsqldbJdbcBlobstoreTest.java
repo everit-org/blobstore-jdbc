@@ -23,9 +23,6 @@ import org.hsqldb.jdbc.pool.JDBCXADataSource;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.querydsl.sql.HSQLDBTemplates;
-import com.querydsl.sql.SQLTemplates;
-
 public class HsqldbJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
@@ -63,11 +60,6 @@ public class HsqldbJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new HSQLDBTemplates(true);
   }
 
   @Test

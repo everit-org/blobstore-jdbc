@@ -18,8 +18,6 @@ package org.everit.blobstore.jdbc.test;
 import javax.sql.XADataSource;
 
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
-import com.querydsl.sql.MySQLTemplates;
-import com.querydsl.sql.SQLTemplates;
 
 public class MySQLRemoteBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
@@ -64,11 +62,6 @@ public class MySQLRemoteBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest 
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new MySQLTemplates(true);
   }
 
 }

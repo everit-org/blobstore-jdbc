@@ -22,9 +22,6 @@ import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.querydsl.sql.SQLServer2012Templates;
-import com.querydsl.sql.SQLTemplates;
-
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 
 public class JtdsJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
@@ -75,11 +72,6 @@ public class JtdsJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new SQLServer2012Templates(true);
   }
 
   @Test

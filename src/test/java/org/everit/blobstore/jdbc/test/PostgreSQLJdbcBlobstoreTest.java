@@ -21,9 +21,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.postgresql.xa.PGXADataSource;
 
-import com.querydsl.sql.PostgreSQLTemplates;
-import com.querydsl.sql.SQLTemplates;
-
 public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
@@ -66,11 +63,6 @@ public class PostgreSQLJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new PostgreSQLTemplates(true);
   }
 
   @Test

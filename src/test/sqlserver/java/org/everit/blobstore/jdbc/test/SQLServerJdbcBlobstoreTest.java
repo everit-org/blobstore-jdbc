@@ -21,8 +21,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.microsoft.sqlserver.jdbc.SQLServerXADataSource;
-import com.querydsl.sql.OracleTemplates;
-import com.querydsl.sql.SQLTemplates;
 
 public class SQLServerJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
@@ -69,11 +67,6 @@ public class SQLServerJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new OracleTemplates(true);
   }
 
   @Test

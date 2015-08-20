@@ -22,9 +22,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.querydsl.sql.DerbyTemplates;
-import com.querydsl.sql.SQLTemplates;
-
 public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @BeforeClass
@@ -65,11 +62,6 @@ public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new DerbyTemplates(true);
   }
 
   @Test

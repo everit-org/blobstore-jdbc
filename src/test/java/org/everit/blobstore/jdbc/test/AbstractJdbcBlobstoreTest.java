@@ -45,8 +45,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.querydsl.sql.SQLTemplates;
-
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.database.DatabaseConnection;
@@ -167,8 +165,6 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   }
 
   protected abstract DatabaseTestAttributesDTO getDatabaseTestAttributes();
-
-  protected abstract SQLTemplates getSQLTemplates();
 
   @Override
   protected TransactionPropagator getTransactionPropagator() {

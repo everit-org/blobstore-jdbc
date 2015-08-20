@@ -19,9 +19,6 @@ import java.sql.SQLException;
 
 import javax.sql.XADataSource;
 
-import com.querydsl.sql.OracleTemplates;
-import com.querydsl.sql.SQLTemplates;
-
 import oracle.jdbc.xa.client.OracleXADataSource;
 
 public class OracleJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
@@ -73,10 +70,5 @@ public class OracleJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
     result.defaultAccessParameters = accessParameters;
     return result;
-  }
-
-  @Override
-  protected SQLTemplates getSQLTemplates() {
-    return new OracleTemplates(true);
   }
 }
