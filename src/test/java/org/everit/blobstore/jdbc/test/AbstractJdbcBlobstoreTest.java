@@ -41,7 +41,9 @@ import org.everit.transaction.propagator.jta.JTATransactionPropagator;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import com.querydsl.sql.SQLTemplates;
 
@@ -52,6 +54,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   private static String nullOrNonEmptyString(final String text) {
     if (text == null) {
@@ -241,7 +244,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.updateActionChancePart = 5;
     testConfiguration.deleteActionChancePart = 5;
     testConfiguration.readActionChancePart = 85;
-    testConfiguration.iterationNumPerThread = 1000;
+    testConfiguration.iterationNumPerThread = 500;
 
     BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
         getBlobStore());
@@ -261,7 +264,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.updateActionChancePart = 5;
     testConfiguration.deleteActionChancePart = 5;
     testConfiguration.readActionChancePart = 85;
-    testConfiguration.iterationNumPerThread = 1000;
+    testConfiguration.iterationNumPerThread = 500;
 
     CachedBlobstore cachedBlobstore = new CachedBlobstore(getBlobStore(),
         new ManagedMap<>(new ReadCommitedTransactionalMap<>(new HashMap<>()), transactionManager),
