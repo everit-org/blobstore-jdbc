@@ -87,6 +87,7 @@
               *
             </Import-Package>
             <Export-Package>org.everit.blobstore.jdbc</Export-Package>
+            <Provide-Capability>liquibase.schema;name=org.everit.blobstore.jdbc;resource=/META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml</Provide-Capability>
           </instructions>
         </configuration>
       </plugin>
