@@ -42,6 +42,7 @@ import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -215,6 +216,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   }
 
   @Test
+  @Ignore("Will be refactored later to be able to run stress tests easily with different"
+      + " configurations")
   public void testConsistency() {
     System.out
         .println(
@@ -228,6 +231,8 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   }
 
   @Test
+  @Ignore("Will be refactored later to be able to run stress tests easily with different"
+      + " configurations")
   public void testPerformance() {
     System.out
         .println(
