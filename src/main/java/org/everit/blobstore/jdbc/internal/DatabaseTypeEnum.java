@@ -29,7 +29,7 @@ public enum DatabaseTypeEnum {
 
   private final List<String> databaseProductNames;
 
-  private DatabaseTypeEnum(final String... databaseProductNames) {
+  DatabaseTypeEnum(final String... databaseProductNames) {
     this.databaseProductNames = Collections.unmodifiableList(Arrays.asList(databaseProductNames));
   }
 

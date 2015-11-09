@@ -19,7 +19,7 @@
 
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd"
-  objectQuotingStrategy="QUOTE_ALL_OBJECTS">
+  objectQuotingStrategy="QUOTE_ALL_OBJECTS" logicalFilePath="org.everit.blobstore.jdbc">
 
   <property name="blob.type" value="oid" dbms="postgresql" />
   <property name="blob.type" value="longblob" dbms="mariadb" />
