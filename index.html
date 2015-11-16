@@ -1,0 +1,276 @@
+<!DOCTYPE HTML>
+<!--
+
+    Copyright (C) 2011 Everit Kft. (http://www.everit.org)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<html>
+
+<head>
+<meta charset="utf-8">
+<title>Blobstore JDBC</title>
+<link rel="icon" type="image/ico" href="http://www.everit.org/fonts/favicon.ico">
+
+<!--    <link rel="stylesheet" type="text/css" href="common/css/base.css">-->
+<link href="http://www.everit.org/css/bootstrap.min.css" rel="stylesheet">
+<link href="http://www.everit.org/css/docs.min.css" rel="stylesheet">
+<link href="http://www.everit.org/css/everit.css" rel="stylesheet">
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push([ '_setAccount', 'UA-15041869-4' ]);
+  _gaq.push([ '_setDomainName', 'everit.org' ]);
+  _gaq.push([ '_trackPageview' ]);
+</script>
+</head>
+
+<body class="bs-docs-home" data-spy="scroll" data-target="#affix-nav">
+  <a class="sr-only" href="#content">Skip to main content</a>
+  <header class="navbar navbar-static-top bs-docs-nav" id="top" role="banner">
+    <div class="container">
+      <div class="navbar-header">
+        <button class="navbar-toggle" type="button" data-toggle="collapse"
+          data-target=".bs-navbar-collapse">
+          <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span
+            class="icon-bar"></span> <span class="icon-bar"></span>
+        </button>
+        <a href="#" class="navbar-brand">Index</a>
+      </div>
+      <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+        <ul class="nav navbar-nav">
+          <li><a href="https://github.com/everit-org/blobstore-jdbc" target="_blank">Source</a></li>
+          <li><a href="http://www.everit.org/" target="_blank">Community</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="http://www.everit.biz" target="_blank">Enterprise</a></li>
+          <li><a href="http://everitorg.wordpress.com/" target="_blank">Blog</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="bs-docs-masthead everit-header" id="content" role="main">
+    <div class="container">
+      <span class="bs-docs-booticon bs-docs-booticon-lg bs-docs-booticon-outline"> <img
+        class="logo" src="http://www.everit.org/fonts/sbz_e.svg" alt="E">
+      </span>
+      <p class="lead">Blobstore JDBC</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="col-md-10">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="introduction" class="bs-docs-featurette-title">Introduction</h2>
+        <p>
+          <a href="https://github.com/everit-org/blobstore-api">Blobstore API</a> implementation
+          that uses standard JDBC API and Blob type.
+        </p>
+      </div>
+      <hr class="featurette-divider">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="download" class="bs-docs-featurette-title">Download</h2>
+        <p>
+          All artifacts are available on <a
+            href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22org.everit.blobstore.jdbc%22">maven-central</a>.
+        </p>
+      </div>
+      <hr class="featurette-divider">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="database_support" class="bs-docs-featurette-title">Database support</h2>
+        <p>JDBC blobstore has been tested with the following database engines:</p>
+        <ul>
+          <li>Apache Derby</li>
+          <li>HSQL Database Engine</li>
+          <li>MySQL</li>
+          <li>Oracle</li>
+          <li>PostgreSQL</li>
+          <li>Microsoft SQL Server</li>
+        </ul>
+        <p>
+          It might be possible that Blobstore works with other database engines as well. There is a
+          possibility to pass a <i>configuration</i> object to the <i>JdbcBlobstore</i> class that
+          allows to handle specialties of the different database engines.
+        </p>
+      </div>
+      <hr class="featurette-divider">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="populating_the_database" class="bs-docs-featurette-title">Populating the
+          database</h2>
+        <p>SQL scripts of tested databases are available in the distributed JAR file.</p>
+        <p>
+          However, it is advised to use <a href="http://www.liquibase.org/">Liquibase</a> to
+          populate the database. The Liquibase changelog XML is available in the distributed JAR
+          file as well.
+        </p>
+        <p>For OSGi environments, Liquibase changelog is also provided as liquibase.schema
+          Bundle capability.</p>
+      </div>
+      <hr class="featurette-divider">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="usage" class="bs-docs-featurette-title">Usage</h2>
+        <pre class="prettyprint lang-java">// Get the JTA aware dataSource from any place
+DataSource myDataSoure = getDataSource();
+
+// Create the blobstore instance
+Blobstore blobstore = new JdbcBlobstore(myDataSource);</pre>
+        <p>
+          Now that you have a blobstore instance, you can use it in the way as it is described in
+          the documentation of the <a href="https://github.com/everit-org/blobstore-api">blobstore-api
+            project</a>.
+        </p>
+        <p>
+          One of the best JTA aware datasource implementations is <a
+            href="http://commons.apache.org/proper/commons-dbcp/api-2.0/org/apache/commons/dbcp2/managed/BasicManagedDataSource.html">BasicManagedDataSource</a>
+          from the <a href="https://commons.apache.org/proper/commons-dbcp/">commons-dbcp</a>
+          project.
+        </p>
+      </div>
+      <hr class="featurette-divider">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="notes_on_database_engines" class="bs-docs-featurette-title">Notes on database
+          engines</h2>
+        <h3 id="postgresql">PostgreSQL</h3>
+        <ul>
+          <li>PostgreSQL uses <a
+            href="http://www.postgresql.org/docs/9.4/static/largeobjects.html">LargeObject</a> API
+            inside.
+          </li>
+          <li>To be able to provide consistent data, the implementation uses <a
+            href="http://www.postgresql.org/docs/9.4/static/explicit-locking.html">FOR SHARE</a> row
+            level lock during reading the blob.
+          </li>
+          <li>In case other XA resources participate in the same JTA transaction, the <a
+            href="http://www.postgresql.org/docs/9.4/static/runtime-config-resource.html">max_prepare_transactions</a>
+            should be set to the number of allowed connections.
+          </li>
+        </ul>
+        <p>In case you are free to choose, postgreSQL is suggested as the backend database.</p>
+        <h3 id="oracle">Oracle</h3>
+        <p>Oracle is the only known database that allows starting the update of a blob while
+          reading operations are in progress. Oracle is 3-6 times faster than other database
+          engines. They must know something for their money :-).</p>
+        <h3 id="mysql">MySQL</h3>
+        <p>MySQL has two modes:</p>
+        <p>
+          The whole content of a blob is copied into the memory of the client program when <i>MysqlXADataSource.setEmulateLocators(false);</i>
+          is used. This is the default mode.
+        </p>
+        <p>
+          Blob chunks are modified with SQL statements when <i>MysqlXADataSource.setEmulateLocators(true);</i>
+          is used. In this mode, the content of the whole blob will not be held in the memory of the
+          client application. However, every time a tiny modification or read is made, the whole
+          blob is processed on the server side.
+        </p>
+        <p>Usage of MySQL is suggested only in case of small size blobs or in case the whole
+          content of the blob is processed (read or written) always. In case only chunks of the blob
+          is processed or seeking is used frequently, the application can get seriously slow.</p>
+        <h3 id="sqlserver">SQLServer</h3>
+        <p>SQLServer holds the whole blob in the memory on the client side. Therefore the usage
+          of SQLServer is only suggested for small blobs.</p>
+        <p>As this blobstore uses distributed transactions, in case of using the proprietary
+          jdbc driver, you need to install XA support for your SQLServer.</p>
+        <h3 id="derby">Derby</h3>
+        <p>Based on the stress tests it seems that pessimistic lock is not working well in
+          Derby. It is possible that one transaction accesses the expired data that was locked for
+          update and than modified by other transaction. From the point of view of Blobstore it
+          means that the version of a blob that is modified on multiple threads will not get
+          incremented as many times as it was modified.</p>
+        <h3 id="hsqldb">Hsqldb</h3>
+        <p>Passed the stress tests.</p>
+        <h3 id="h2">H2</h3>
+        <p>
+          H2 does not support seeking in blobs at all. Until this is implemented, H2 will not be
+          supported by <i>JdbcBlobstore</i>.
+        </p>
+      </div>
+      <hr class="featurette-divider">
+
+      <div class="bs-docs-featurette cookbook">
+        <h2 id="cache" class="bs-docs-featurette-title">Cache</h2>
+        <p>
+          Wrap your <i>blobstore</i> instance with <a
+            href="https://github.com/everit-org/blobstore-cache">blobstore-cache</a> as it can
+          improve reading performance a lot.
+        </p>
+      </div>
+      <hr class="featurette-divider">
+    </div>
+
+    <!--        Affix-->
+    <div class="col-md-2 col-sm-0 col-xs-0">
+      <nav id="affix-nav">
+        <ul class="nav nav-pills nav-stacked everit-affix" data-spy="affix" data-offset-top="350"
+          data-offset-bottom="140">
+          <li class="active"><a href="#introduction">Introduction</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="#database_support">Database support</a></li>
+          <li><a href="#populating_the_database">Populating the database</a></li>
+          <li><a href="#usage">Usage</a></li>
+          <li><a href="#notes_on_database_engines">Notes on database engines</a>
+            <ul class="nav nav-pills nav-stacked">
+              <li><a href="#postgresql">PostgreSQL</a></li>
+              <li><a href="#oracle">Oracle</a></li>
+              <li><a href="#mysql">MySQL</a></li>
+              <li><a href="#sqlserver">SQLServer</a></li>
+              <li><a href="#derby">Derby</a></li>
+              <li><a href="#hsqldb">Hsqldb</a></li>
+              <li><a href="#h2">H2</a></li>
+            </ul></li>
+          <li><a href="#cache">Cache</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <div></div>
+  <footer class="bs-docs-footer" role="contentinfo">
+    <div class="container">
+      <div class="bs-docs-social">
+        <ul class="bs-docs-social-buttons">
+          <li class="follow-btn "><a href="https://twitter.com/EveritOrg"
+            class="twitter-follow-button" data-show-count="true">Follow @EveritOrg</a></li>
+          <li class="tweet-btn"><a href="https://twitter.com/share"
+            class="twitter-share-button" data-url="http://www.everit.org/">Tweet</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap core JavaScript
+================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script src="http://www.everit.org/js/jquery-2.1.1.min.js"></script>
+  <script src="http://www.everit.org/js/bootstrap.min.js"></script>
+  <script src="http://www.everit.org/js/everit.js "></script>
+  <script type="text/javascript">
+      (function() {
+        var ga = document.createElement('script');
+        ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl'
+            : 'http://www')
+            + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+</body>
+
+</html>
