@@ -24,12 +24,12 @@
   <parent>
     <groupId>org.everit.config</groupId>
     <artifactId>org.everit.config.oss</artifactId>
-    <version>7.0.1</version>
+    <version>7.2.0</version>
   </parent>
 
   <groupId>org.everit.blobstore</groupId>
   <artifactId>org.everit.blobstore.jdbc</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <packaging>bundle</packaging>
   <name>Everit - Blobstore JDBC</name>
@@ -87,43 +87,45 @@
               *
             </Import-Package>
             <Export-Package>org.everit.blobstore.jdbc</Export-Package>
-            <Provide-Capability>liquibase.schema;name=org.everit.blobstore.jdbc;resource=/META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml</Provide-Capability>
+            <Provide-Capability>liquibase.schema;name=org.everit.blobstore.jdbc;resource=/META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml;lqmg.config.resource=/META-INF/liquibase/org.everit.blobstore.jdbc.lqmg.xml</Provide-Capability>
           </instructions>
         </configuration>
       </plugin>
-
-<!--       <plugin> -->
-<!--         <groupId>org.liquibase</groupId> -->
-<!--         <artifactId>liquibase-maven-plugin</artifactId> -->
-<!--         <version>3.0.5</version> -->
-<!--         <configuration> -->
-<!--           <changeLogFile>src/main/resources/META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml</changeLogFile> -->
-<!--           <driver>org.postgresql.Driver</driver> -->
-<!--           <url>jdbc:postgresql://localhost:5432/blobstore_jdbc</url> -->
-<!--           <username>test</username> -->
-<!--           <password>test</password> -->
-<!--         </configuration> -->
-<!--       </plugin> -->
-
       <plugin>
-        <groupId>com.querydsl</groupId>
-        <artifactId>querydsl-maven-plugin</artifactId>
-        <version>4.0.3</version>
+        <groupId>org.everit.persistence</groupId>
+        <artifactId>lqmg-maven-plugin</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
         <configuration>
-          <jdbcDriver>org.postgresql.Driver</jdbcDriver>
-          <jdbcUrl>jdbc:postgresql://localhost:5432/blobstore_jdbc</jdbcUrl>
-          <packageName>org.everit.blobstore.jdbc.schema.qdsl</packageName>
-          <targetFolder>${project.basedir}/target/generated-sources/java</targetFolder>
-          <jdbcUser>test</jdbcUser>
-          <jdbcPassword>test</jdbcPassword>
+          <defaultSchema>org.everit.blobstore.jdbc</defaultSchema>
+          <capability>org.everit.blobstore.jdbc</capability>
+          <packages>org.everit.blobstore.jdbc.schema.qdsl</packages>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.4-1201-jdbc41</version>
-          </dependency>
-        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.9.1</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/main/generated/java/</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <excludeFilterFile>blobstore-findbugs-exclude-filter.xml</excludeFilterFile>
+        </configuration>
       </plugin>
     </plugins>
   </build>
@@ -137,7 +139,7 @@
     <dependency>
       <groupId>com.querydsl</groupId>
       <artifactId>querydsl-sql</artifactId>
-      <version>4.0.3</version>
+      <version>4.0.6</version>
     </dependency>
 
     <dependency>

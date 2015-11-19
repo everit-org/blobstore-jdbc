@@ -6,3 +6,4 @@
 /.fbExcludeFilterFile
 /.pmd
 /.pmdruleset.xml
+/derby.log
