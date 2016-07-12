@@ -483,7 +483,7 @@ public class JdbcBlobstore implements Blobstore {
   protected Configuration resolveQuerydslConfiguration(
       final JdbcBlobstoreConfiguration blobstoreConfiguration) {
     if (blobstoreConfiguration != null && blobstoreConfiguration.querydslConfiguration != null) {
-      return querydslConfiguration;
+      return blobstoreConfiguration.querydslConfiguration;
     }
 
     DatabaseTypeEnum databaseType = guessDatabaseType();
