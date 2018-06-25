@@ -80,13 +80,13 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   @Override
   @After
   public void after() {
-    if (skipped) {
+    if (this.skipped) {
       return;
     }
     super.after();
-    if (managedDataSource != null) {
+    if (this.managedDataSource != null) {
       try {
-        managedDataSource.close();
+        this.managedDataSource.close();
       } catch (SQLException e) {
         throw new RuntimeException(e);
       }
@@ -97,21 +97,21 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
   public void before() {
     DatabaseAccessParametersDTO databaseAccessParameters = resolveDatabaseAccessParameters();
 
-    skipped = databaseAccessParameters == null;
+    this.skipped = databaseAccessParameters == null;
     Assume.assumeFalse("Tests are not enabled for database " + getDatabaseTestAttributes().dbName,
-        skipped);
+        this.skipped);
 
     try {
-      transactionManager = new GeronimoTransactionManager(6000);
+      this.transactionManager = new GeronimoTransactionManager(6000);
     } catch (XAException e) {
       throw new RuntimeException(e);
     }
 
     XADataSource xaDataSource = createXADataSource(databaseAccessParameters);
 
-    managedDataSource = createManagedDataSource(transactionManager, xaDataSource);
+    this.managedDataSource = createManagedDataSource(this.transactionManager, xaDataSource);
 
-    try (Connection connection = managedDataSource.getConnection()) {
+    try (Connection connection = this.managedDataSource.getConnection()) {
       DatabaseConnection databaseConnection = new JdbcConnection(connection);
 
       Liquibase liquibase = new Liquibase(
@@ -137,16 +137,16 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
       liquibase.update((Contexts) null);
     } catch (LiquibaseException | SQLException e) {
       try {
-        managedDataSource.close();
+        this.managedDataSource.close();
       } catch (SQLException e1) {
         e.addSuppressed(e1);
       }
       throw new RuntimeException(e);
     }
 
-    blobstore = new JdbcBlobstore(managedDataSource);
+    this.blobstore = new JdbcBlobstore(this.managedDataSource);
 
-    transactionPropagator = new JTATransactionPropagator(transactionManager);
+    this.transactionPropagator = new JTATransactionPropagator(this.transactionManager);
 
   }
 
@@ -162,14 +162,14 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
   @Override
   protected Blobstore getBlobStore() {
-    return blobstore;
+    return this.blobstore;
   }
 
   protected abstract DatabaseTestAttributesDTO getDatabaseTestAttributes();
 
   @Override
   protected TransactionPropagator getTransactionPropagator() {
-    return transactionPropagator;
+    return this.transactionPropagator;
   }
 
   protected DatabaseAccessParametersDTO resolveDatabaseAccessParameters() {
@@ -222,11 +222,11 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     System.out
         .println(
             "---------- Consistency Test (" + this.getClass().getSimpleName() + ") --------------");
-    MemBlobstore memBlobstore = new MemBlobstore(transactionManager);
+    MemBlobstore memBlobstore = new MemBlobstore(this.transactionManager);
     BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration testConfiguration =
         new BlobstoreStressAndConsistencyTester.BlobstoreStressTestConfiguration();
 
-    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, this.transactionPropagator,
         memBlobstore, getBlobStore());
   }
 
@@ -247,7 +247,7 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.readActionChancePart = 85;
     testConfiguration.iterationNumPerThread = 500;
 
-    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, this.transactionPropagator,
         getBlobStore());
   }
 
@@ -268,10 +268,11 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
     testConfiguration.iterationNumPerThread = 500;
 
     CachedBlobstore cachedBlobstore = new CachedBlobstore(getBlobStore(),
-        new ManagedMap<>(new ReadCommitedTransactionalMap<>(new HashMap<>()), transactionManager),
-        1024, transactionManager);
+        new ManagedMap<>(new ReadCommitedTransactionalMap<>(new HashMap<>()),
+            this.transactionManager),
+        1024, this.transactionManager);
 
-    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, transactionPropagator,
+    BlobstoreStressAndConsistencyTester.runStressTest(testConfiguration, this.transactionPropagator,
         cachedBlobstore);
   }
 

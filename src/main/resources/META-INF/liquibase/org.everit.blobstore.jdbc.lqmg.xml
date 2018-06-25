@@ -20,8 +20,22 @@
   xsi:schemaLocation="http://everit.org/lqmg http://www.everit.org/xml/ns/lqmg/lqmg-3.0.0.xsd">
   <namingRules>
     <classNameRule>
-      <entity>BLOBSTORE_BLOB</entity>
+      <entity>blobstore_blob</entity>
       <class>BlobstoreBlob</class>
+      <propertyMappings>
+        <primaryKey>
+          <name>pk_blobstore_blob</name>
+          <property>blobPk</property>
+        </primaryKey>
+        <column>
+          <name>version_</name>
+          <property>version</property>
+        </column>
+        <column>
+          <name>blob_</name>
+          <property>blob</property>
+        </column>
+      </propertyMappings>
     </classNameRule>
   </namingRules>
 </lqmg>

@@ -72,24 +72,25 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
   protected void executeAfterBlobStatementClosedButBeforeConnectionClose() throws SQLException {
     super.executeAfterBlobStatementClosedButBeforeConnectionClose();
 
-    if (!updateBlobContentInUpdateSQLNecessary && getVersion() == newVersion) {
+    if (!this.updateBlobContentInUpdateSQLNecessary && getVersion() == this.newVersion) {
       return;
     }
 
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
-    SQLUpdateClause updateClause = new SQLUpdateClause(connection, querydslConfiguration, qBlob)
-        .set(qBlob.version_, getNewVersion())
-        .where(qBlob.blobId.eq(connectedBlob.blobId));
+    SQLUpdateClause updateClause =
+        new SQLUpdateClause(this.connection, this.querydslConfiguration, qBlob)
+            .set(qBlob.version, getNewVersion())
+            .where(qBlob.blobId.eq(this.connectedBlob.blobId));
 
-    if (updateBlobContentInUpdateSQLNecessary) {
-      updateClause.set(qBlob.blob_, connectedBlob.blobChannel.getBlobExpression());
+    if (this.updateBlobContentInUpdateSQLNecessary) {
+      updateClause.set(qBlob.blob, this.connectedBlob.blobChannel.getBlobExpression());
     }
     updateClause.execute();
   }
 
   @Override
   public long getNewVersion() {
-    return newVersion;
+    return this.newVersion;
   }
 
   @Override
@@ -101,27 +102,27 @@ public class JdbcBlobAccessor extends JdbcBlobReader implements BlobAccessor {
       throw new IllegalArgumentException(
           "Blob size cannot be extended to a bigger size by calling truncate");
     }
-    if (position > newLength) {
+    if (this.position > newLength) {
       throw new IllegalArgumentException(
           "Blob cannot be truncated to a size that is before the current position");
     }
 
-    connectedBlob.blobChannel.truncate(newLength);
+    this.connectedBlob.blobChannel.truncate(newLength);
   }
 
   @Override
   public void write(final byte[] b, final int off, final int len) {
     if (b == null) {
       throw new NullPointerException();
-    } else if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length)
-        || ((off + len) < 0)) {
+    } else if (off < 0 || off > b.length || len < 0 || off + len > b.length
+        || off + len < 0) {
       throw new IndexOutOfBoundsException();
     } else if (len == 0) {
       return;
     }
 
-    connectedBlob.blobChannel.write(position, b, off, len);
-    position += len;
+    this.connectedBlob.blobChannel.write(this.position, b, off, len);
+    this.position += len;
 
   }
 

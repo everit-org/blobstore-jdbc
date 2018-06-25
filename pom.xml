@@ -16,7 +16,8 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
@@ -24,12 +25,12 @@
   <parent>
     <groupId>org.everit.config</groupId>
     <artifactId>org.everit.config.oss</artifactId>
-    <version>7.3.0</version>
+    <version>7.4.0</version>
   </parent>
 
   <groupId>org.everit.blobstore</groupId>
   <artifactId>org.everit.blobstore.jdbc</artifactId>
-  <version>2.0.1</version>
+  <version>3.0.0</version>
 
   <packaging>bundle</packaging>
   <name>Everit - Blobstore JDBC</name>
@@ -86,14 +87,14 @@
               *
             </Import-Package>
             <Export-Package>org.everit.blobstore.jdbc</Export-Package>
-            <Provide-Capability>liquibase.changelog;liquibase.changelog=org.everit.blobstore.jdbc;resource=/META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml;lqmg.config.resource=/META-INF/liquibase/org.everit.blobstore.jdbc.lqmg.xml;version:Version="1.0.0"</Provide-Capability>
+            <Provide-Capability>liquibase.changelog;liquibase.changelog=org.everit.blobstore.jdbc;resource=/META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml;lqmg.config.resource=/META-INF/liquibase/org.everit.blobstore.jdbc.lqmg.xml;version:Version="3.0.0"</Provide-Capability>
           </instructions>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.everit.persistence</groupId>
         <artifactId>lqmg-maven-plugin</artifactId>
-        <version>4.1.0</version>
+        <version>4.1.1</version>
         <configuration>
           <defaultSchema>org.everit.blobstore.jdbc</defaultSchema>
           <capability>org.everit.blobstore.jdbc</capability>
@@ -103,7 +104,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>3.0.0</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -138,7 +139,7 @@
     <dependency>
       <groupId>com.querydsl</groupId>
       <artifactId>querydsl-sql</artifactId>
-      <version>4.1.3</version>
+      <version>4.2.1</version>
     </dependency>
 
     <dependency>
@@ -190,7 +191,7 @@
     <dependency>
       <groupId>org.liquibase</groupId>
       <artifactId>liquibase-core</artifactId>
-      <version>3.5.0</version>
+      <version>3.5.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -289,20 +290,16 @@
       <dependencies>
           <!-- To test with sqlserver proprietary driver
               
-                - Copy the sqljdbc_xa.dll file into the binn folder of your SQLServer instance.
+                - Copy the sqljdbc_xa.dll file into the bin folder of your SQLServer instance.
                 - Run xa_install.sql on your SQLServer
                 - Run exec sp_addrolemember [SqlJDBCXAUser], 'MySQLUser'
                 - Enable XA Transactions at Local DTC: https://msdn.microsoft.com/en-us/library/aa342335(v=sql.110).aspx
-                - download jdbc driver and install it into your local maven repo with the command:
-
-                   mvn install:install-file -DgroupId=com.microsoft.sqlserver -DartifactId=sqljdbc41 -Dversion=4.1.5605.100 \
-                      -Dpackaging=jar -Dfile=sqljdbc41.jar -DgeneratePom=true
 
                    -->
         <dependency>
           <groupId>com.microsoft.sqlserver</groupId>
-          <artifactId>sqljdbc41</artifactId>
-          <version>4.1.5605.100</version>
+          <artifactId>mssql-jdbc</artifactId>
+          <version>6.4.0.jre8</version>
         </dependency>
       </dependencies>
       <build>

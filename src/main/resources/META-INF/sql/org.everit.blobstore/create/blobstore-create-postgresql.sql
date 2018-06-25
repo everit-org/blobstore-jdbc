@@ -14,37 +14,32 @@
 -- limitations under the License.
 --
 
--- Before running this SQL script, you might need to initialize liqiubase tables, too
-
--- Changeset META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml::1.0.0::everit
-CREATE TABLE "BLOBSTORE_BLOB" ("BLOB_ID" BIGSERIAL NOT NULL, "VERSION_" BIGINT NOT NULL, "BLOB_" OID NOT NULL, CONSTRAINT "PK_BLOBSTORE_BLOB" PRIMARY KEY ("BLOB_ID"));
+CREATE TABLE blobstore_blob (blob_id BIGSERIAL NOT NULL, version_ BIGINT NOT NULL, blob_ OID NOT NULL, CONSTRAINT pk_blobstore_blob PRIMARY KEY (blob_id));
 
 CREATE OR REPLACE FUNCTION blobstore_manage() RETURNS trigger AS $BODY$
 DECLARE
     blobstore_tmp_row RECORD;
 BEGIN
 IF (TG_OP = 'UPDATE') THEN
-  IF (NEW."BLOB_" != OLD."BLOB_") THEN
-    PERFORM lo_unlink(OLD."BLOB_");
+  IF (NEW.blob_ != OLD.blob_) THEN
+    PERFORM lo_unlink(OLD.blob_);
   END IF;
   RETURN NEW;
 ELSIF (TG_OP = 'DELETE') THEN
-  PERFORM lo_unlink(OLD."BLOB_");
+  PERFORM lo_unlink(OLD.blob_);
   RETURN OLD;
 ELSIF (TG_OP = 'TRUNCATE') THEN
-  FOR blobstore_tmp_row IN SELECT * FROM "BLOBSTORE_BLOB" LOOP
-    PERFORM lo_unlink(blobstore_tmp_row."BLOB_");
+  FOR blobstore_tmp_row IN SELECT * FROM blobstore_blob LOOP
+    PERFORM lo_unlink(blobstore_tmp_row.blob_);
   END LOOP;
-  DELETE FROM pg_largeobject WHERE loid IN (SELECT "BLOB_" FROM "BLOBSTORE_BLOB");
+  DELETE FROM pg_largeobject WHERE loid IN (SELECT blob_ FROM blobstore_blob);
 END IF;
 RETURN null;
 END;
 $BODY$ LANGUAGE plpgsql;
 
-CREATE TRIGGER blobstore_manage BEFORE UPDATE OR DELETE ON "BLOBSTORE_BLOB"
+CREATE TRIGGER blobstore_manage BEFORE UPDATE OR DELETE ON blobstore_blob
       FOR EACH ROW EXECUTE PROCEDURE blobstore_manage();
 
-CREATE TRIGGER blobstore_manage_truncate BEFORE TRUNCATE ON "BLOBSTORE_BLOB"
+CREATE TRIGGER blobstore_manage_truncate BEFORE TRUNCATE ON blobstore_blob
       EXECUTE PROCEDURE blobstore_manage();
-
-INSERT INTO databasechangelog (ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, MD5SUM, DESCRIPTION, COMMENTS, EXECTYPE, CONTEXTS, LABELS, LIQUIBASE) VALUES ('1.0.0', 'everit', 'META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml', NOW(), 1, '7:e082829cb51b1be812ca14af8d1b1f77', 'createTable, createProcedure, sql (x2)', '', 'EXECUTED', NULL, NULL, '3.4.0');

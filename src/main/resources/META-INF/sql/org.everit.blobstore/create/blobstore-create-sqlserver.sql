@@ -14,11 +14,5 @@
 -- limitations under the License.
 --
 
--- Before running this SQL script, you might need to initialize liqiubase tables, too
-
--- Changeset META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml::1.0.0::everit
-CREATE TABLE [BLOBSTORE_BLOB] ([BLOB_ID] [bigint] IDENTITY (1, 1) NOT NULL, [VERSION_] [bigint] NOT NULL, [BLOB_] [varbinary](MAX) NOT NULL, CONSTRAINT [PK_BLOBSTORE_BLOB] PRIMARY KEY ([BLOB_ID]))
-GO
-
-INSERT INTO [DATABASECHANGELOG] ([ID], [AUTHOR], [FILENAME], [DATEEXECUTED], [ORDEREXECUTED], [MD5SUM], [DESCRIPTION], [COMMENTS], [EXECTYPE], [CONTEXTS], [LABELS], [LIQUIBASE]) VALUES ('1.0.0', 'everit', 'META-INF/liquibase/org.everit.blobstore.jdbc.changelog.xml', GETDATE(), 1, '7:7220e46e283e66cea6aa3d8573445b15', 'createTable, createProcedure, sql (x2)', '', 'EXECUTED', NULL, NULL, '3.4.0')
+CREATE TABLE blobstore_blob (blob_id [bigint] IDENTITY (1, 1) NOT NULL, version_ [bigint] NOT NULL, blob_ [varbinary](MAX) NOT NULL, CONSTRAINT pk_blobstore_blob PRIMARY KEY (blob_id))
 GO

@@ -37,24 +37,24 @@ public class QBlobstoreBlob extends com.querydsl.sql.RelationalPathBase<QBlobsto
 
     private static final long serialVersionUID = -447041485;
 
-    public static final QBlobstoreBlob blobstoreBlob = new QBlobstoreBlob("BLOBSTORE_BLOB");
+    public static final QBlobstoreBlob blobstoreBlob = new QBlobstoreBlob("blobstore_blob");
 
     public class PrimaryKeys {
 
-        public final com.querydsl.sql.PrimaryKey<QBlobstoreBlob> blobstoreBlobPk = createPrimaryKey(blobId);
+        public final com.querydsl.sql.PrimaryKey<QBlobstoreBlob> blobPk = createPrimaryKey(blobId);
 
     }
 
-    public final SimplePath<java.sql.Blob> blob_ = createSimple("blob_", java.sql.Blob.class);
+    public final SimplePath<java.sql.Blob> blob = createSimple("blob", java.sql.Blob.class);
 
     public final NumberPath<Long> blobId = createNumber("blobId", Long.class);
 
-    public final NumberPath<Long> version_ = createNumber("version_", Long.class);
+    public final NumberPath<Long> version = createNumber("version", Long.class);
 
     public final PrimaryKeys pk = new PrimaryKeys();
 
     public QBlobstoreBlob(String variable) {
-        super(QBlobstoreBlob.class, forVariable(variable), "org.everit.blobstore.jdbc", "BLOBSTORE_BLOB");
+        super(QBlobstoreBlob.class, forVariable(variable), "org.everit.blobstore.jdbc", "blobstore_blob");
         addMetadata();
     }
 
@@ -63,20 +63,25 @@ public class QBlobstoreBlob extends com.querydsl.sql.RelationalPathBase<QBlobsto
         addMetadata();
     }
 
+    public QBlobstoreBlob(String variable, String schema) {
+        super(QBlobstoreBlob.class, forVariable(variable), schema, "blobstore_blob");
+        addMetadata();
+    }
+
     public QBlobstoreBlob(Path<? extends QBlobstoreBlob> path) {
-        super(path.getType(), path.getMetadata(), "org.everit.blobstore.jdbc", "BLOBSTORE_BLOB");
+        super(path.getType(), path.getMetadata(), "org.everit.blobstore.jdbc", "blobstore_blob");
         addMetadata();
     }
 
     public QBlobstoreBlob(PathMetadata metadata) {
-        super(QBlobstoreBlob.class, metadata, "org.everit.blobstore.jdbc", "BLOBSTORE_BLOB");
+        super(QBlobstoreBlob.class, metadata, "org.everit.blobstore.jdbc", "blobstore_blob");
         addMetadata();
     }
 
     public void addMetadata() {
-        addMetadata(blob_, ColumnMetadata.named("BLOB_").withIndex(3).ofType(Types.BLOB).withSize(2147483647).notNull());
-        addMetadata(blobId, ColumnMetadata.named("BLOB_ID").withIndex(1).ofType(Types.BIGINT).withSize(19).notNull());
-        addMetadata(version_, ColumnMetadata.named("VERSION_").withIndex(2).ofType(Types.BIGINT).withSize(19).notNull());
+        addMetadata(blob, ColumnMetadata.named("blob_").withIndex(3).ofType(Types.BLOB).withSize(2147483647).notNull());
+        addMetadata(blobId, ColumnMetadata.named("blob_id").withIndex(1).ofType(Types.BIGINT).withSize(19).notNull());
+        addMetadata(version, ColumnMetadata.named("version_").withIndex(2).ofType(Types.BIGINT).withSize(19).notNull());
     }
 
 }
