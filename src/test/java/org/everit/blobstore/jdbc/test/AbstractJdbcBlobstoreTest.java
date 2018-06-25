@@ -31,6 +31,7 @@ import org.apache.geronimo.transaction.manager.GeronimoTransactionManager;
 import org.everit.blobstore.Blobstore;
 import org.everit.blobstore.cache.CachedBlobstore;
 import org.everit.blobstore.jdbc.JdbcBlobstore;
+import org.everit.blobstore.jdbc.JdbcBlobstoreConfiguration;
 import org.everit.blobstore.mem.MemBlobstore;
 import org.everit.blobstore.testbase.AbstractBlobstoreTest;
 import org.everit.blobstore.testbase.BlobstoreStressAndConsistencyTester;
@@ -148,6 +149,10 @@ public abstract class AbstractJdbcBlobstoreTest extends AbstractBlobstoreTest {
 
     this.transactionPropagator = new JTATransactionPropagator(this.transactionManager);
 
+  }
+
+  protected JdbcBlobstoreConfiguration createJdbcBlobstoreConfiguration() {
+    return null;
   }
 
   protected BasicManagedDataSource createManagedDataSource(

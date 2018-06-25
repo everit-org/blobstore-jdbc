@@ -17,7 +17,7 @@ package org.everit.blobstore.jdbc.test;
 
 import javax.sql.XADataSource;
 
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+import com.mysql.cj.jdbc.MysqlXADataSource;
 
 public class MySQLMemoryBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
@@ -50,7 +50,7 @@ public class MySQLMemoryBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest 
   @Override
   protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
     DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
-    result.dbName = "mysql";
+    result.dbName = "mysql.ram";
     result.enabledByDefault = false;
 
     DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();

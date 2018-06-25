@@ -15,16 +15,22 @@
  */
 package org.everit.blobstore.jdbc.test;
 
+import java.sql.SQLException;
+
 import javax.sql.XADataSource;
 
-import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+import com.mysql.cj.jdbc.MysqlXADataSource;
 
 public class MySQLRemoteBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
 
   @Override
   protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {
     MysqlXADataSource xaDataSource = new MysqlXADataSource();
-    xaDataSource.setEmulateLocators(true);
+    try {
+      xaDataSource.setEmulateLocators(true);
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
     String url = "jdbc:mysql://" + parameters.host;
     if (parameters.port != null) {
       url += ":" + parameters.port;
@@ -51,7 +57,7 @@ public class MySQLRemoteBlobJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest 
   @Override
   protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
     DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
-    result.dbName = "mysql";
+    result.dbName = "mysql.remote";
     result.enabledByDefault = false;
 
     DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();

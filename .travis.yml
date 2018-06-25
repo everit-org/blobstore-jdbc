@@ -16,7 +16,7 @@ before_script:
   - psql -c 'SHOW config_file;' -U postgres
   - psql -c 'create database blobstore_jdbc;' -U postgres
   - mysql -e 'create database blobstore_jdbc;'
-script: mvn verify -Dpostgresql.enabled=true -Dpostgresql.user=postgres -Dpostgresql.password= -Dmysql.enabled=true -Dmysql.database=blobstore_jdbc -Dmysql.user=travis -Dmysql.password= 
+script: mvn verify -Dpostgresql.enabled=true -Dpostgresql.user=postgres -Dpostgresql.password= -Dmysql.ram.enabled=true -Dmysql.ram.database=blobstore_jdbc -Dmysql.ram.user=travis -Dmysql.ram.password= 
 install: true
 cache:
   directories:

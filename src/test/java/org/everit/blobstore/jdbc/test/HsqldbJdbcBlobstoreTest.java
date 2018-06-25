@@ -16,14 +16,30 @@
 package org.everit.blobstore.jdbc.test;
 
 import java.sql.SQLException;
+import java.util.Locale;
 
 import javax.sql.XADataSource;
 
+import org.everit.blobstore.jdbc.JdbcBlobstoreConfiguration;
 import org.hsqldb.jdbc.pool.JDBCXADataSource;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.querydsl.sql.Configuration;
+import com.querydsl.sql.HSQLDBTemplates;
+import com.querydsl.sql.namemapping.ChangeLetterCaseNameMapping;
+import com.querydsl.sql.namemapping.ChangeLetterCaseNameMapping.LetterCase;
+
 public class HsqldbJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
+
+  @Override
+  protected JdbcBlobstoreConfiguration createJdbcBlobstoreConfiguration() {
+    JdbcBlobstoreConfiguration result = new JdbcBlobstoreConfiguration();
+    result.querydslConfiguration = new Configuration(new HSQLDBTemplates());
+    result.querydslConfiguration
+        .setDynamicNameMapping(new ChangeLetterCaseNameMapping(LetterCase.UPPER, Locale.US));
+    return super.createJdbcBlobstoreConfiguration();
+  }
 
   @Override
   protected XADataSource createXADataSource(final DatabaseAccessParametersDTO parameters) {

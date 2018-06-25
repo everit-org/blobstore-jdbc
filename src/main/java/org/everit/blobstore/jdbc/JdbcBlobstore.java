@@ -46,6 +46,7 @@ import com.querydsl.core.QueryFlag.Position;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.sql.ColumnMetadata;
 import com.querydsl.sql.Configuration;
 import com.querydsl.sql.DerbyTemplates;
 import com.querydsl.sql.HSQLDBTemplates;
@@ -175,8 +176,8 @@ public class JdbcBlobstore implements Blobstore {
     QBlobstoreBlob qBlob = QBlobstoreBlob.blobstoreBlob;
     try {
       SQLQuery<Tuple> query = new SQLQuery<>(connection, this.querydslConfiguration)
-          .select(qBlob.blobId, qBlob.version.as("version_"),
-              Expressions.as(this.blobSelectionExpression, "blob_"))
+          .select(qBlob.blobId, qBlob.version.as("v"),
+              Expressions.as(this.blobSelectionExpression, "b"))
           .from(qBlob)
           .where(qBlob.blobId.eq(blobId));
       if (forUpdate) {
@@ -203,8 +204,8 @@ public class JdbcBlobstore implements Blobstore {
           throw new NoSuchBlobException(blobId);
         }
 
-        version = resultSet.getLong("version_");
-        blob = resultSet.getBlob("blob_");
+        version = resultSet.getLong("v");
+        blob = resultSet.getBlob("b");
       } finally {
         final boolean closeResultSetIsNotNecessaryAsItWillBeClosedByStatement = false;
         closeResultSet(resultSet, closeResultSetIsNotNecessaryAsItWillBeClosedByStatement);
@@ -395,7 +396,13 @@ public class JdbcBlobstore implements Blobstore {
 
     try (Connection connection = this.dataSource.getConnection()) {
       if (!connection.getMetaData().locatorsUpdateCopy()) {
-        return Expressions.constant(QBlobstoreBlob.blobstoreBlob.blob.getMetadata().getName());
+        String columnName =
+            ColumnMetadata.getName(QBlobstoreBlob.blobstoreBlob.blob);
+
+        columnName = this.querydslConfiguration
+            .getColumnOverride(QBlobstoreBlob.blobstoreBlob.getSchemaAndTable(), columnName);
+
+        return Expressions.constant(columnName);
       } else {
         return QBlobstoreBlob.blobstoreBlob.blob;
       }
