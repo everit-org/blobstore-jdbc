@@ -54,7 +54,8 @@ public class DerbyJdbcBlobstoreTest extends AbstractJdbcBlobstoreTest {
   protected DatabaseTestAttributesDTO getDatabaseTestAttributes() {
     DatabaseTestAttributesDTO result = new DatabaseTestAttributesDTO();
     result.dbName = "derby";
-    result.enabledByDefault = true;
+    // Must switch off because of a Querydsl issue. PR already sent, hopefully fixed in 4.2.2
+    result.enabledByDefault = false;
 
     DatabaseAccessParametersDTO accessParameters = new DatabaseAccessParametersDTO();
     accessParameters.database = "memory:testDB";
